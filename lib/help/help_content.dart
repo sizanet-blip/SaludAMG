@@ -1,0 +1,271 @@
+// Contenido de ayuda de SaludAMG (guía, manual y FAQ).
+// El HTML para el CMS vive en docs/manual-web-cms.html.
+
+class HelpDocSection {
+  final String title;
+  final List<String> paragraphs;
+  final List<String> bullets;
+
+  const HelpDocSection({
+    required this.title,
+    this.paragraphs = const [],
+    this.bullets = const [],
+  });
+}
+
+class HelpDoc {
+  final String id;
+  final String title;
+  final String subtitle;
+  final List<HelpDocSection> sections;
+
+  const HelpDoc({
+    required this.id,
+    required this.title,
+    required this.subtitle,
+    required this.sections,
+  });
+}
+
+class HelpFaqItem {
+  final String question;
+  final String answer;
+
+  const HelpFaqItem({required this.question, required this.answer});
+}
+
+abstract final class HelpContent {
+  static const String supportEmail = 'info@albertomaestre.es';
+  static const String appName = 'SaludAMG';
+
+  static const HelpDoc guiaRapida = HelpDoc(
+    id: 'guia',
+    title: 'Guía rápida de uso',
+    subtitle: 'Lo esencial para empezar en pocos minutos',
+    sections: [
+      HelpDocSection(
+        title: '1. Qué es SaludAMG',
+        paragraphs: [
+          '$appName es una app de seguimiento personal: tensión arterial, pulso, peso, glucosa, oxigenación, pasos, medicación y recordatorios.',
+          'No sustituye el criterio de un profesional sanitario. Los avisos de medicación son ayudas; tú decides cómo seguir las indicaciones de tu médico.',
+        ],
+      ),
+      HelpDocSection(
+        title: '2. Cuenta AMG (si está configurada)',
+        bullets: [
+          'Al abrir la app puede pedirte usuario y contraseña (cuenta AMG).',
+          'Regístrate, acepta privacidad y condiciones, y espera la aprobación del administrador si la cuenta queda pendiente.',
+          'Guarda el código de recuperación que se muestra al registrarte.',
+          'Sin API configurada en el build, puedes usar la app directamente.',
+        ],
+      ),
+      HelpDocSection(
+        title: '3. Primeros pasos',
+        bullets: [
+          'Inicio → Configuración → Ficha: completa tu perfil.',
+          'Configuración → Datos a medir: elige qué métricas registrar.',
+          'En el inicio, pulsa Medición para anotar la primera lectura.',
+          'Opcional: Medicaciones, Recordatorios (en Configuración), Health Connect / Apple Health, bloqueo PIN.',
+        ],
+      ),
+      HelpDocSection(
+        title: '4. Día a día',
+        bullets: [
+          'Inicio: accesos rápidos Medicación y Medición, más Resumen, Historial, Medicaciones, Configuración y Ayuda.',
+          'Resumen: última toma, evolución y exportar Excel/PDF.',
+          'Historial: icono de ajustes (tune) para filtrar por periodo, momento, origen o aviso.',
+          'Configuración → Copia de seguridad: exporta o restaura un archivo cifrado.',
+        ],
+      ),
+      HelpDocSection(
+        title: '5. Consejos express',
+        bullets: [
+          'Haz copias de seguridad con frecuencia.',
+          'Si usas PIN/biometría, no olvides el código.',
+          'Privacidad y condiciones están en Ayuda y en Acerca de (Configuración).',
+          'Soporte: $supportEmail.',
+        ],
+      ),
+    ],
+  );
+
+  static const HelpDoc manualCompleto = HelpDoc(
+    id: 'manual',
+    title: 'Manual completo',
+    subtitle: 'Referencia detallada para el día a día',
+    sections: [
+      HelpDocSection(
+        title: '1. Introducción',
+        paragraphs: [
+          '$appName guarda tus datos en el dispositivo. El panel AMG solo recibe datos de cuenta/instalación si el build está configurado (usuario, versión, device); no se envían mediciones ni medicación al registrarte.',
+          'La app está pensada para adultos. Úsala bajo tu responsabilidad y contrastá datos antes de decisiones sanitarias.',
+        ],
+      ),
+      HelpDocSection(
+        title: '2. Cuenta AMG y acceso',
+        paragraphs: [
+          'Si el build incluye la URL de autenticación, al abrir verás login/registro.',
+        ],
+        bullets: [
+          'Registro: usuario, contraseña, email opcional; aceptar privacidad y condiciones.',
+          'Pendiente: un administrador debe activar la cuenta en el panel antes de entrar.',
+          'Código de recuperación: guárdalo; sirve para restablecer la contraseña.',
+          'Instalación: en Acerca de (Configuración) puedes asociar un email de contacto (opcional) y ver el ID de dispositivo.',
+        ],
+      ),
+      HelpDocSection(
+        title: '3. Pantalla de inicio',
+        paragraphs: [
+          'La pantalla principal muestra el wordmark y los botones de acción Medicación y Medición (el de medicación se puede ocultar en preferencias).',
+          'Debajo tienes el menú principal: Resumen, Historial, Medicaciones, Configuración y Ayuda. Cerrar sesión aparece si hay cuenta AMG.',
+        ],
+      ),
+      HelpDocSection(
+        title: '4. Resumen',
+        paragraphs: [
+          'Última medición, gráfica de evolución (periodo y métrica con el icono de ajustes) y acceso al historial.',
+          'Desde el menú de la cabecera de Resumen puedes Exportar Excel o Exportar PDF.',
+        ],
+      ),
+      HelpDocSection(
+        title: '5. Menú principal y Configuración',
+        bullets: [
+          'Resumen — última toma, evolución e informes.',
+          'Historial — listado; filtros con el icono tune de la cabecera.',
+          'Medicaciones — tratamientos, tomas del día y preferencias (tune).',
+          'Configuración → Ficha, Recordatorios, Datos a medir, Medicación (config).',
+          'Configuración → Copia de seguridad, Bloqueo PIN, Cuenta AMG, Acerca de.',
+          'Ayuda — guía, manual, FAQ y textos legales.',
+        ],
+      ),
+      HelpDocSection(
+        title: '6. Mediciones',
+        paragraphs: [
+          'Al pulsar Medición eliges fecha/hora y los valores habilitados (tensión, pulso, peso, glucosa, SpO₂, pasos, notas…).',
+          'Puedes editar una lectura desde el historial o desde la tarjeta de la última medición en Resumen.',
+        ],
+      ),
+      HelpDocSection(
+        title: '7. Medicación y recordatorios',
+        paragraphs: [
+          'Alta de medicamentos con pautas, horarios y, si lo activas, control de tomas y stock.',
+          'En Medicación (config) defines botón en inicio, seguimiento de dosis y avisos de pedida al médico.',
+          'Recordatorios (en Configuración) y notificaciones locales del sistema.',
+        ],
+      ),
+      HelpDocSection(
+        title: '8. Importación de salud',
+        paragraphs: [
+          'Si autorizas Health Connect (Android) o Apple Health (iOS), la app puede leer solo los tipos que permitas.',
+          'Revisa Datos a medir y los permisos del sistema. Puedes revocar el acceso en los ajustes del dispositivo.',
+        ],
+      ),
+      HelpDocSection(
+        title: '9. Exportación y copia de seguridad',
+        bullets: [
+          'Resumen → Exportar Excel / PDF: informes para compartir o archivar (no sustituyen la historia clínica).',
+          'Configuración → Copia de seguridad: archivo cifrado; al importar sustituye los datos actuales — exporta antes si quieres conservar lo de ahora.',
+        ],
+      ),
+      HelpDocSection(
+        title: '10. Bloqueo PIN',
+        paragraphs: [
+          'En Configuración puedes proteger el acceso con PIN y, si el dispositivo lo permite, biometría.',
+          'Si olvidas el PIN y no hay otra vía de desbloqueo, puede ser necesario borrar datos de la app (perderás lo local si no tienes copia).',
+        ],
+      ),
+      HelpDocSection(
+        title: '11. Actualizaciones y soporte',
+        paragraphs: [
+          'Configuración → Acerca de → Buscar actualizaciones. Según el build, abre el canal propio o Google Play.',
+          'Soporte: $supportEmail. Indica versión de la app y, si puedes, capturas.',
+        ],
+      ),
+      HelpDocSection(
+        title: '12. Privacidad y condiciones',
+        paragraphs: [
+          'Los textos legales propios de $appName están en Ayuda y en Acerca de. Al registrarte debes aceptarlos.',
+          'Detalle del tratamiento (qué queda en el dispositivo y qué va al panel) en la Política de privacidad.',
+        ],
+      ),
+    ],
+  );
+
+  static const List<HelpFaqItem> faq = [
+    HelpFaqItem(
+      question: '¿SaludAMG sustituye al médico?',
+      answer:
+          'No. Es una herramienta de seguimiento personal. Contrastá siempre con un profesional sanitario.',
+    ),
+    HelpFaqItem(
+      question: '¿Por qué me pide cuenta al abrir?',
+      answer:
+          'Si el build tiene autenticación AMG configurada, el acceso requiere usuario/contraseña aprobados. Sin esa configuración, la app abre directamente.',
+    ),
+    HelpFaqItem(
+      question: 'Me he registrado y no puedo entrar',
+      answer:
+          'La cuenta puede estar pendiente de aprobación. Cuando el administrador la active en el panel, inicia sesión con tu usuario y contraseña.',
+    ),
+    HelpFaqItem(
+      question: 'Olvidé la contraseña',
+      answer:
+          'Usa la recuperación con el código que se mostró al registrarte (y usuario). Si pusiste email, también puede usarse según el flujo disponible.',
+    ),
+    HelpFaqItem(
+      question: '¿Se envían mis mediciones al servidor?',
+      answer:
+          'No como parte del registro de cuenta. Las mediciones y la medicación se guardan en el dispositivo. El panel puede recibir datos de instalación/cuenta (versión, device, usuario). Detalle en Política de privacidad.',
+    ),
+    HelpFaqItem(
+      question: '¿Dónde están Medicación y Medición?',
+      answer:
+          'En la pantalla de inicio, arriba del menú. Medición abre el formulario de una lectura; Medicación abre el listado (se puede ocultar en Medicación config → Botón en inicio).',
+    ),
+    HelpFaqItem(
+      question: '¿Dónde están los recordatorios?',
+      answer:
+          'Inicio → Configuración → Recordatorios. Ahí gestionas avisos de medicación y mediciones.',
+    ),
+    HelpFaqItem(
+      question: '¿Cómo filtro el historial?',
+      answer:
+          'En Historial, pulsa el icono de ajustes (tune) en la cabecera. Ahí eliges periodo, momento, origen y avisos.',
+    ),
+    HelpFaqItem(
+      question: '¿Cómo exporto para mi médico?',
+      answer:
+          'Entra en Resumen y usa Exportar Excel o Exportar PDF en el menú de la cabecera. Elige periodo y bloques del informe.',
+    ),
+    HelpFaqItem(
+      question: '¿Cómo restauro una copia?',
+      answer:
+          'Configuración → Copia de seguridad → Importar. Sustituye los datos actuales; exporta antes si quieres conservar lo de ahora.',
+    ),
+    HelpFaqItem(
+      question: 'No llegan los recordatorios',
+      answer:
+          'Comprueba permisos de notificación del sistema, que el recordatorio esté activo y que el modo No molestar no silencie la app.',
+    ),
+    HelpFaqItem(
+      question: '¿Qué es «Datos a medir»?',
+      answer:
+          'Configuración → Datos a medir. Define qué campos aparecen al anotar una medición. Desactiva lo que no uses.',
+    ),
+    HelpFaqItem(
+      question: 'Health Connect / Apple Health no sincroniza',
+      answer:
+          'Revisa permisos en el sistema y qué tipos de dato autorizaste. La app solo lee lo que permitas.',
+    ),
+    HelpFaqItem(
+      question: '¿Dónde están privacidad y condiciones?',
+      answer:
+          'Inicio → Ayuda, o Configuración → Acerca de → Legal. Debes aceptarlas al crear la cuenta AMG.',
+    ),
+    HelpFaqItem(
+      question: '¿Dónde pido ayuda personalizada?',
+      answer:
+          'Escribe a $supportEmail con la versión de la app y una descripción del problema.',
+    ),
+  ];
+}

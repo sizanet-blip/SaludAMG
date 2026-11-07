@@ -1,0 +1,18 @@
+{
+  "latestVersion": "1.0.1",
+  "latestBuild": 2,
+  "minSupportedVersion": "1.0.0",
+  "mandatory": false,
+  "changelog": [
+    "Mejoras en medicación y exportes",
+    "Corrección de avisos"
+  ],
+  "downloads": {
+    "android": {
+      "url": "https://tu-servidor/saludamg/SaludAMG.apk"
+    },
+    "default": {
+      "url": "https://tu-servidor/saludamg/SaludAMG.apk"
+    }
+  }
+}

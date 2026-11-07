@@ -1,0 +1,345 @@
+<!--
+  Manual web SaludAMG — pegar en el campo "contenido" del CMS.
+
+  Sube ANTES estos PNG a /uploads/cms/
+  (origen: carpeta assets/help/ del proyecto Flutter)
+
+  00_saludamg_icono.png
+  01_saludamg_home.png
+  02_saludamg_login.png
+  03_saludamg_registro.png
+  04_saludamg_privacidad.png
+  05_saludamg_condiciones.png
+  06_saludamg_recuperar.png
+  07_saludamg_ficha.png
+  08_saludamg_historial.png
+  09_saludamg_recordatorios.png
+  10_saludamg_medicaciones.png
+  11_saludamg_med_config.png
+  12_saludamg_datos_medir.png
+  13_saludamg_backup.png
+  14_saludamg_bloqueo.png
+  15_saludamg_ayuda.png
+  16_saludamg_acerca.png
+  17_saludamg_guia.png
+  18_saludamg_manual.png
+  19_saludamg_faq.png
+  20_saludamg_medicion.png
+  21_saludamg_exportar_informe.png
+  22_saludamg_exportar_columnas.png
+  23_saludamg_exportar_excel_share.png
+  24_saludamg_exportar_pdf_share.png
+  25_saludamg_informe_pdf.png
+  26_saludamg_informe_pdf_detalle.png
+  27_saludamg_resumen.png
+  28_saludamg_config.png
+-->
+<article class="manual-saludamg">
+  <style>
+    .manual-saludamg { max-width: 740px; margin: 0 auto; color: #263238; line-height: 1.55; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
+    .manual-saludamg h1 { font-size: 1.8rem; margin: 0 0 0.5rem; color: #37474f; }
+    .manual-saludamg h2 { font-size: 1.4rem; margin: 2.25rem 0 0.75rem; padding-top: 0.75rem; border-top: 1px solid #e2e8ee; color: #455a64; }
+    .manual-saludamg h3 { font-size: 1.12rem; margin: 1.4rem 0 0.5rem; color: #546e7a; }
+    .manual-saludamg p { margin: 0.45rem 0 0.7rem; }
+    .manual-saludamg ul { margin: 0.35rem 0 1rem; padding-left: 1.25rem; }
+    .manual-saludamg li { margin: 0.3rem 0; }
+    .manual-saludamg .lead { color: #607d8b; font-size: 1.05rem; }
+    .manual-saludamg .hero { text-align: center; padding: 0.5rem 0 0.25rem; }
+    .manual-saludamg .hero img.logo,
+    .program-content .content-html .manual-saludamg .hero img.logo {
+      width: 88px; max-width: 88px; height: 88px; margin: 0 auto; border-radius: 18px;
+      box-shadow: 0 6px 20px rgba(0, 174, 239, 0.22);
+    }
+    .manual-saludamg figure { margin: 1rem 0 1.4rem; text-align: center; }
+    .manual-saludamg figure img,
+    .program-content .content-html .manual-saludamg figure img {
+      max-width: 200px; width: 200px; height: auto; margin: 0.5rem auto; display: block;
+      border-radius: 12px; border: 1px solid #e2e8ee; box-shadow: 0 4px 16px rgba(0,0,0,.06); background: #f4f6f8;
+    }
+    .manual-saludamg figcaption { margin-top: 0.45rem; font-size: 0.85rem; color: #78909c; }
+    .manual-saludamg .toc { background: #f4f6f8; border-radius: 12px; padding: 1rem 1.25rem; margin: 1.25rem 0; }
+    .manual-saludamg .toc a { color: #455a64; text-decoration: none; }
+    .manual-saludamg .toc a:hover { text-decoration: underline; }
+    .manual-saludamg .toc ul { margin: 0.4rem 0 0; }
+    .manual-saludamg .note { background: #eef3f6; border-left: 3px solid #00aeef; padding: 0.75rem 1rem; margin: 1rem 0; border-radius: 0 8px 8px 0; font-size: 0.95rem; }
+    .manual-saludamg details { background: #fff; border: 1px solid #e2e8ee; border-radius: 10px; padding: 0.7rem 1rem; margin: 0.45rem 0; }
+    .manual-saludamg summary { font-weight: 600; cursor: pointer; color: #37474f; }
+    .manual-saludamg details p { margin: 0.7rem 0 0.2rem; color: #546e7a; }
+  </style>
+
+  <div class="hero">
+    <img class="logo" src="/uploads/cms/00_saludamg_icono.png" alt="Icono SaludAMG" />
+  </div>
+  <h1>Manual de usuario — SaludAMG</h1>
+  <p class="lead">Seguimiento personal de tensión, pulso, peso, glucosa y medicación. Guía con capturas de la aplicación (actualizado octubre 2026).</p>
+
+  <nav class="toc" aria-label="Índice">
+    <strong>Índice</strong>
+    <ul>
+      <li><a href="#intro">1. Introducción</a></li>
+      <li><a href="#cuenta">2. Cuenta AMG y acceso</a></li>
+      <li><a href="#inicio">3. Pantalla de inicio</a></li>
+      <li><a href="#resumen">4. Resumen e informes</a></li>
+      <li><a href="#mediciones">5. Mediciones e historial</a></li>
+      <li><a href="#medicacion">6. Medicación, recordatorios y configuración</a></li>
+      <li><a href="#datos">7. Copia de seguridad y bloqueo</a></li>
+      <li><a href="#ayuda">8. Ayuda en la app</a></li>
+      <li><a href="#legal">9. Privacidad y condiciones</a></li>
+      <li><a href="#faq">10. Preguntas frecuentes</a></li>
+      <li><a href="#soporte">11. Soporte</a></li>
+    </ul>
+  </nav>
+
+  <div class="note">
+    SaludAMG <strong>no sustituye</strong> el criterio de un profesional sanitario.
+    Los avisos de medicación son ayudas; tú decides cómo seguir las indicaciones de tu médico.
+  </div>
+
+  <h2 id="intro">1. Introducción</h2>
+  <p>
+    SaludAMG guarda tus mediciones y medicación en el dispositivo. El panel AMG
+    solo recibe datos de cuenta/instalación si el build está configurado
+    (usuario, versión, device); no se envían mediciones ni medicación al registrarte.
+  </p>
+
+  <h2 id="cuenta">2. Cuenta AMG y acceso</h2>
+  <p>
+    Si el build tiene autenticación, al abrir verás login/registro:
+  </p>
+  <figure>
+    <img src="/uploads/cms/02_saludamg_login.png" alt="Inicio de sesión SaludAMG" />
+    <figcaption>Entrar con usuario y contraseña AMG</figcaption>
+  </figure>
+  <figure>
+    <img src="/uploads/cms/03_saludamg_registro.png" alt="Registro SaludAMG" />
+    <figcaption>Crear cuenta: aceptar privacidad y condiciones</figcaption>
+  </figure>
+  <ul>
+    <li>Regístrate con usuario, contraseña y email opcional.</li>
+    <li>Acepta la política de privacidad y las condiciones de uso de SaludAMG.</li>
+    <li>Guarda el <strong>código de recuperación</strong>.</li>
+    <li>Si la cuenta queda <strong>pendiente</strong>, un administrador debe activarla antes de entrar.</li>
+  </ul>
+  <figure>
+    <img src="/uploads/cms/06_saludamg_recuperar.png" alt="Recuperar contraseña" />
+    <figcaption>Recuperación con código (pestaña Código)</figcaption>
+  </figure>
+  <p>
+    En <strong>Configuración → Acerca de</strong> puedes asociar un email de contacto (opcional),
+    ver el ID de dispositivo y buscar actualizaciones.
+  </p>
+  <figure>
+    <img src="/uploads/cms/16_saludamg_acerca.png" alt="Acerca de SaludAMG" />
+    <figcaption>Acerca de: versión, legal e instalación</figcaption>
+  </figure>
+
+  <h2 id="inicio">3. Pantalla de inicio</h2>
+  <p>
+    La pantalla principal muestra el wordmark SaludAMG y los botones de acción
+    <strong>Medicación</strong> y <strong>Medición</strong>.
+    Debajo está el menú: Resumen, Historial, Medicaciones, Configuración y Ayuda.
+  </p>
+  <figure>
+    <img src="/uploads/cms/01_saludamg_home.png" alt="Inicio SaludAMG" />
+    <figcaption>Inicio: acciones rápidas y menú principal</figcaption>
+  </figure>
+  <ul>
+    <li><strong>Medición</strong> — nueva lectura (tensión, pulso, peso…).</li>
+    <li><strong>Medicación</strong> — listado de tratamientos (opcional; se puede ocultar en preferencias).</li>
+    <li><strong>Resumen</strong> — última toma, evolución e informes.</li>
+    <li><strong>Historial</strong> — listado y filtros.</li>
+    <li><strong>Medicaciones</strong> — gestión diaria de fármacos.</li>
+    <li><strong>Configuración</strong> — ficha, avisos, datos, copia, PIN, cuenta.</li>
+    <li><strong>Ayuda</strong> — guía, manual, FAQ y legal.</li>
+  </ul>
+
+  <h2 id="resumen">4. Resumen e informes</h2>
+  <p>
+    Resumen muestra la última medición, la gráfica de evolución y el acceso al historial.
+    En la cabecera, el menú ⋮ permite <strong>Exportar Excel</strong> o <strong>Exportar PDF</strong>.
+  </p>
+  <figure>
+    <img src="/uploads/cms/27_saludamg_resumen.png" alt="Resumen SaludAMG" />
+    <figcaption>Resumen: última toma y evolución</figcaption>
+  </figure>
+  <p>
+    En el diálogo de informe eliges periodo, bloques (ficha, mediciones, medicaciones, tomas)
+    y columnas. Pulsa <strong>Crear</strong> para generar el archivo y compartirlo.
+  </p>
+  <figure>
+    <img src="/uploads/cms/21_saludamg_exportar_informe.png" alt="Diálogo exportar informe" />
+    <figcaption>Exportar informe: periodo y bloques</figcaption>
+  </figure>
+  <figure>
+    <img src="/uploads/cms/22_saludamg_exportar_columnas.png" alt="Columnas del informe" />
+    <figcaption>Columnas de mediciones y contexto</figcaption>
+  </figure>
+  <figure>
+    <img src="/uploads/cms/23_saludamg_exportar_excel_share.png" alt="Compartir Excel" />
+    <figcaption>Excel generado listo para compartir (.xlsx)</figcaption>
+  </figure>
+  <figure>
+    <img src="/uploads/cms/24_saludamg_exportar_pdf_share.png" alt="Compartir PDF" />
+    <figcaption>PDF generado listo para compartir</figcaption>
+  </figure>
+  <figure>
+    <img src="/uploads/cms/25_saludamg_informe_pdf.png" alt="Vista del informe PDF" />
+    <figcaption>Vista del PDF: ficha y mediciones de ejemplo</figcaption>
+  </figure>
+  <figure>
+    <img src="/uploads/cms/26_saludamg_informe_pdf_detalle.png" alt="Detalle tablas del PDF" />
+    <figcaption>Tablas del informe (varias páginas)</figcaption>
+  </figure>
+
+  <h2 id="mediciones">5. Mediciones e historial</h2>
+  <p>
+    Pulsa <strong>Medición</strong> en el inicio para anotar fecha/hora y los valores habilitados
+    (tensión, pulso, peso, glucosa, SpO₂, pasos, notas…).
+    En <strong>Configuración → Datos a medir</strong> eliges qué campos se piden.
+  </p>
+  <figure>
+    <img src="/uploads/cms/20_saludamg_medicion.png" alt="Nueva medición" />
+    <figcaption>Formulario de medición</figcaption>
+  </figure>
+  <figure>
+    <img src="/uploads/cms/12_saludamg_datos_medir.png" alt="Datos a medir" />
+    <figcaption>Datos a medir: qué campos pedir</figcaption>
+  </figure>
+  <p>
+    En <strong>Historial</strong>, usa el icono de ajustes (tune) de la cabecera para filtrar
+    por periodo, momento, origen o avisos.
+  </p>
+  <figure>
+    <img src="/uploads/cms/08_saludamg_historial.png" alt="Historial" />
+    <figcaption>Historial de mediciones</figcaption>
+  </figure>
+  <p>
+    Si autorizas Health Connect / Apple Health, la app lee solo los tipos que permitas.
+  </p>
+
+  <h2 id="medicacion">6. Medicación, recordatorios y configuración</h2>
+  <p>
+    Desde el inicio o el botón Medicación accedes al listado de fármacos, pautas y tomas.
+    El icono tune abre las preferencias de medicación.
+  </p>
+  <figure>
+    <img src="/uploads/cms/10_saludamg_medicaciones.png" alt="Medicaciones" />
+    <figcaption>Listado de medicaciones</figcaption>
+  </figure>
+  <figure>
+    <img src="/uploads/cms/11_saludamg_med_config.png" alt="Configuración de medicación" />
+    <figcaption>Preferencias: botón en inicio, dosis, avisos al médico</figcaption>
+  </figure>
+  <p>
+    <strong>Configuración</strong> agrupa el resto de ajustes: ficha, recordatorios, datos a medir,
+    copia, PIN, cuenta y acerca de.
+  </p>
+  <figure>
+    <img src="/uploads/cms/28_saludamg_config.png" alt="Configuración" />
+    <figcaption>Hub de configuración</figcaption>
+  </figure>
+  <figure>
+    <img src="/uploads/cms/07_saludamg_ficha.png" alt="Ficha de perfil" />
+    <figcaption>Ficha: datos personales y referencias</figcaption>
+  </figure>
+  <figure>
+    <img src="/uploads/cms/09_saludamg_recordatorios.png" alt="Recordatorios" />
+    <figcaption>Recordatorios (dentro de Configuración)</figcaption>
+  </figure>
+
+  <h2 id="datos">7. Copia de seguridad y bloqueo</h2>
+  <ul>
+    <li><strong>Copia de seguridad</strong> — archivo cifrado; al importar sustituye los datos actuales.</li>
+    <li><strong>Bloqueo PIN</strong> — PIN y biometría si el dispositivo lo permite.</li>
+  </ul>
+  <figure>
+    <img src="/uploads/cms/13_saludamg_backup.png" alt="Copia de seguridad" />
+    <figcaption>Copia de seguridad</figcaption>
+  </figure>
+  <figure>
+    <img src="/uploads/cms/14_saludamg_bloqueo.png" alt="Bloqueo PIN" />
+    <figcaption>Bloqueo PIN / biometría</figcaption>
+  </figure>
+
+  <h2 id="ayuda">8. Ayuda en la app</h2>
+  <p>Inicio → <strong>Ayuda</strong>: guía rápida, manual completo, FAQ y textos legales.</p>
+  <figure>
+    <img src="/uploads/cms/15_saludamg_ayuda.png" alt="Ayuda" />
+    <figcaption>Índice de ayuda</figcaption>
+  </figure>
+  <figure>
+    <img src="/uploads/cms/17_saludamg_guia.png" alt="Guía rápida" />
+    <figcaption>Guía rápida de uso</figcaption>
+  </figure>
+  <figure>
+    <img src="/uploads/cms/18_saludamg_manual.png" alt="Manual completo" />
+    <figcaption>Manual completo</figcaption>
+  </figure>
+  <figure>
+    <img src="/uploads/cms/19_saludamg_faq.png" alt="FAQ" />
+    <figcaption>Preguntas y respuestas</figcaption>
+  </figure>
+
+  <h2 id="legal">9. Privacidad y condiciones</h2>
+  <p>
+    Los textos legales propios de SaludAMG (versión 1.1 · 2026-10-28) están en la app
+    (Ayuda y Acerca de). Debes aceptarlos al crear la cuenta AMG.
+  </p>
+  <figure>
+    <img src="/uploads/cms/04_saludamg_privacidad.png" alt="Política de privacidad" />
+    <figcaption>Política de privacidad</figcaption>
+  </figure>
+  <figure>
+    <img src="/uploads/cms/05_saludamg_condiciones.png" alt="Condiciones de uso" />
+    <figcaption>Condiciones de uso</figcaption>
+  </figure>
+
+  <h2 id="faq">10. Preguntas frecuentes</h2>
+  <details>
+    <summary>¿Se envían mis mediciones al servidor?</summary>
+    <p>No como parte del registro de cuenta. Quedan en el dispositivo. Detalle en la Política de privacidad.</p>
+  </details>
+  <details>
+    <summary>Me he registrado y no puedo entrar</summary>
+    <p>La cuenta puede estar pendiente de aprobación del administrador.</p>
+  </details>
+  <details>
+    <summary>Olvidé la contraseña</summary>
+    <p>Usa el código de recuperación mostrado al registrarte (y tu usuario).</p>
+  </details>
+  <details>
+    <summary>¿Dónde están Medicación y Medición?</summary>
+    <p>En la pantalla de inicio, arriba del menú. Medicación se puede ocultar en preferencias («Botón en inicio»).</p>
+  </details>
+  <details>
+    <summary>¿Dónde están los recordatorios?</summary>
+    <p>Inicio → Configuración → Recordatorios.</p>
+  </details>
+  <details>
+    <summary>¿Cómo filtro el historial?</summary>
+    <p>Historial → icono de ajustes (tune) en la cabecera.</p>
+  </details>
+  <details>
+    <summary>¿Cómo exporto para mi médico?</summary>
+    <p>Resumen → menú ⋮ → Exportar Excel o Exportar PDF.</p>
+  </details>
+  <details>
+    <summary>¿Cómo restauro una copia?</summary>
+    <p>Configuración → Copia de seguridad → Importar. Sustituye los datos actuales.</p>
+  </details>
+  <details>
+    <summary>No llegan los recordatorios</summary>
+    <p>Revisa permisos de notificación del sistema y que el aviso esté activo.</p>
+  </details>
+  <details>
+    <summary>¿Dónde están privacidad y condiciones?</summary>
+    <p>Inicio → Ayuda, o Configuración → Acerca de → Legal.</p>
+  </details>
+
+  <h2 id="soporte">11. Soporte</h2>
+  <p>
+    En la app: Inicio → <strong>Ayuda</strong>. Contacto:
+    <a href="mailto:info@albertomaestre.es">info@albertomaestre.es</a>
+    (indica versión de la app y capturas si puedes).
+  </p>
+</article>
