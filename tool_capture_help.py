@@ -174,6 +174,11 @@ def capture_app_screens() -> None:
     if _open_from_home("Medicaciones"):
         time.sleep(0.6)
         shot("10_saludamg_medicaciones.png")
+        # «Tomado» pregunta la hora real (se cancela: no guarda nada).
+        if tap_label("Tomado", partial=False):
+            time.sleep(0.6)
+            shot("29_saludamg_tomado_hora.png")
+            tap_label("Cancelar", partial=False)
         back()
 
     if _open_from_home("Configuración"):
@@ -187,7 +192,7 @@ def capture_app_screens() -> None:
         ("Datos a medir", "12_saludamg_datos_medir.png"),
         ("Opciones de medicación", "11_saludamg_med_config.png"),
         ("Copia de seguridad", "13_saludamg_backup.png"),
-        ("Bloqueo PIN", "14_saludamg_bloqueo.png"),
+        ("Bloqueo", "14_saludamg_bloqueo.png"),
         ("Acerca de", "16_saludamg_acerca.png"),
     ]
     for label, file in config_shots:

@@ -33,6 +33,8 @@
   26_saludamg_informe_pdf_detalle.png
   27_saludamg_resumen.png
   28_saludamg_config.png
+  29_saludamg_tomado_hora.png
+  30_saludamg_desbloqueo.png
 -->
 <article class="manual-saludamg">
   <style>
@@ -71,7 +73,7 @@
     <img class="logo" src="/uploads/cms/00_saludamg_icono.png" alt="Icono SaludAMG" />
   </div>
   <h1>Manual de usuario — SaludAMG</h1>
-  <p class="lead">Seguimiento personal de tensión, pulso, peso, glucosa y medicación. Guía con capturas de la aplicación (actualizado octubre 2026).</p>
+  <p class="lead">Seguimiento personal de tensión, pulso, peso, glucosa y medicación. Guía con capturas de la aplicación (actualizado noviembre 2026, versión 1.0.0).</p>
 
   <nav class="toc" aria-label="Índice">
     <strong>Índice</strong>
@@ -82,7 +84,7 @@
       <li><a href="#resumen">4. Resumen e informes</a></li>
       <li><a href="#mediciones">5. Mediciones e historial</a></li>
       <li><a href="#medicacion">6. Medicación, recordatorios y configuración</a></li>
-      <li><a href="#datos">7. Copia de seguridad y bloqueo</a></li>
+      <li><a href="#datos">7. Copia de seguridad, bloqueo y seguridad</a></li>
       <li><a href="#ayuda">8. Ayuda en la app</a></li>
       <li><a href="#legal">9. Privacidad y condiciones</a></li>
       <li><a href="#faq">10. Preguntas frecuentes</a></li>
@@ -97,9 +99,13 @@
 
   <h2 id="intro">1. Introducción</h2>
   <p>
-    SaludAMG guarda tus mediciones y medicación en el dispositivo. El panel AMG
-    solo recibe datos de cuenta/instalación si el build está configurado
-    (usuario, versión, device); no se envían mediciones ni medicación al registrarte.
+    SaludAMG guarda tus mediciones y tu medicación <strong>solo en tu teléfono</strong>,
+    cifradas. Al panel AMG solo van los datos de la cuenta (usuario, email, versión de la
+    app e identificador del teléfono); nunca tus mediciones ni tu medicación.
+  </p>
+  <p>
+    Si en el mismo teléfono entran varias personas, cada cuenta AMG ve <strong>solo sus
+    propios datos</strong>.
   </p>
 
   <h2 id="cuenta">2. Cuenta AMG y acceso</h2>
@@ -130,12 +136,22 @@
     y abre el enlace que recibirás para crear una nueva.
   </p>
   <p>
-    En <strong>Configuración → Acerca de</strong> puedes ver la versión, el ID de dispositivo
-    y buscar actualizaciones.
+    Una vez dentro, la sesión se queda abierta: no hace falta escribir la contraseña cada
+    vez. Si hay internet, la app comprueba de vez en cuando (como mucho cada 12 horas) que
+    tu cuenta sigue activa. Sin internet puedes seguir usándola con normalidad.
+  </p>
+  <p>
+    Si el administrador bloquea tu cuenta o le quita SaludAMG, la app cierra la sesión y te
+    lo explica. Tus datos siguen en el teléfono y vuelven a verse cuando entres de nuevo.
+  </p>
+  <p>
+    En <strong>Configuración → Acerca de</strong> puedes ver la versión, el identificador
+    del teléfono (por si te lo pide soporte) y buscar actualizaciones. La app también
+    busca actualizaciones sola al abrirse.
   </p>
   <figure>
     <img src="/uploads/cms/16_saludamg_acerca.png" alt="Acerca de SaludAMG" />
-    <figcaption>Acerca de: versión, legal e instalación</figcaption>
+    <figcaption>Acerca de: versión, legal y dispositivo</figcaption>
   </figure>
 
   <h2 id="inicio">3. Pantalla de inicio</h2>
@@ -154,7 +170,7 @@
     <li><strong>Resumen</strong> — última toma, evolución e informes.</li>
     <li><strong>Historial</strong> — listado y filtros.</li>
     <li><strong>Medicaciones</strong> — gestión diaria de fármacos.</li>
-    <li><strong>Configuración</strong> — ficha, avisos, datos, copia, PIN, cuenta.</li>
+    <li><strong>Configuración</strong> — ficha, avisos, datos, copia, bloqueo y cuenta.</li>
     <li><strong>Ayuda</strong> — guía, manual, FAQ y legal.</li>
   </ul>
 
@@ -162,6 +178,8 @@
   <p>
     Resumen muestra la última medición, la gráfica de evolución y el acceso al historial.
     En la cabecera, el menú ⋮ permite <strong>Exportar Excel</strong> o <strong>Exportar PDF</strong>.
+    También puedes exportar desde <strong>Historial</strong> con el botón de compartir de la
+    cabecera: en ese caso te propone el periodo que tengas filtrado.
   </p>
   <figure>
     <img src="/uploads/cms/27_saludamg_resumen.png" alt="Resumen SaludAMG" />
@@ -170,6 +188,8 @@
   <p>
     En el diálogo de informe eliges periodo, bloques (ficha, mediciones, medicaciones, tomas)
     y columnas. Pulsa <strong>Crear</strong> para generar el archivo y compartirlo.
+    En las tomas de medicación, el informe incluye la <strong>hora real</strong> a la que
+    tomaste cada una.
   </p>
   <figure>
     <img src="/uploads/cms/21_saludamg_exportar_informe.png" alt="Diálogo exportar informe" />
@@ -212,7 +232,8 @@
   </figure>
   <p>
     En <strong>Historial</strong>, usa el icono de ajustes (tune) de la cabecera para filtrar
-    por periodo, momento, origen o avisos.
+    por periodo, momento, origen o avisos, y el de compartir para exportar el informe.
+    Al tocar una medición puedes editarla: los valores que no toques se guardan tal cual.
   </p>
   <figure>
     <img src="/uploads/cms/08_saludamg_historial.png" alt="Historial" />
@@ -225,19 +246,39 @@
   <h2 id="medicacion">6. Medicación, recordatorios y configuración</h2>
   <p>
     Desde el inicio o el botón Medicación accedes al listado de fármacos, pautas y tomas.
-    El icono tune abre las preferencias de medicación.
+    El icono tune abre las <strong>Opciones de medicación</strong>.
   </p>
   <figure>
     <img src="/uploads/cms/10_saludamg_medicaciones.png" alt="Medicaciones" />
-    <figcaption>Listado de medicaciones</figcaption>
+    <figcaption>Medicaciones: pendientes de ayer, tomas de hoy y cumplimiento</figcaption>
   </figure>
+  <h3>Marcar las tomas</h3>
+  <ul>
+    <li>En <strong>Hoy</strong> sale cada medicación con sus horas. Junto a cada hora tienes
+      <em>Tomado</em> y <em>Omitido</em>.</li>
+    <li>Al pulsar <strong>Tomado</strong> te pregunta <em>¿Cuándo la tomaste?</em>. Por defecto
+      es ahora: pulsa <em>Guardar</em>. Si fue a otra hora, pulsa <em>Cambiar</em> y elige día
+      y hora.</li>
+    <li>En la lista verás la hora real, por ejemplo <em>Tomado 08:15</em>.</li>
+  </ul>
   <figure>
-    <img src="/uploads/cms/11_saludamg_med_config.png" alt="Configuración de medicación" />
-    <figcaption>Preferencias: botón en inicio, dosis, avisos al médico</figcaption>
+    <img src="/uploads/cms/29_saludamg_tomado_hora.png" alt="Elegir la hora de la toma" />
+    <figcaption>Tomado: toma prevista y hora real (por defecto, ahora)</figcaption>
+  </figure>
+  <h3>Si se te olvida o te la tomas pasada la medianoche</h3>
+  <p>
+    Al día siguiente aparece arriba el apartado <strong>Pendientes de ayer</strong> con las
+    tomas de ayer que se quedaron sin marcar. Por ejemplo, si la de las 22:00 te la tomas a
+    las 00:30, márcala ahí como <em>Tomado</em> con las 00:30: cuenta para ayer y no
+    descuadra el día de hoy. Cuando no queda nada pendiente, el apartado desaparece.
+  </p>
+  <figure>
+    <img src="/uploads/cms/11_saludamg_med_config.png" alt="Opciones de medicación" />
+    <figcaption>Opciones de medicación: botón en inicio, registro de tomas, stock y avisos al médico</figcaption>
   </figure>
   <p>
     <strong>Configuración</strong> agrupa el resto de ajustes: ficha, recordatorios, datos a medir,
-    copia, PIN, cuenta y acerca de.
+    opciones de medicación, copia, bloqueo, cuenta y acerca de.
   </p>
   <figure>
     <img src="/uploads/cms/28_saludamg_config.png" alt="Configuración" />
@@ -252,19 +293,46 @@
     <figcaption>Recordatorios (dentro de Configuración)</figcaption>
   </figure>
 
-  <h2 id="datos">7. Copia de seguridad y bloqueo</h2>
+  <h2 id="datos">7. Copia de seguridad, bloqueo y seguridad</h2>
+  <h3>Copia de seguridad</h3>
   <ul>
-    <li><strong>Copia de seguridad</strong> — archivo cifrado; al importar sustituye los datos actuales.</li>
-    <li><strong>Bloqueo PIN</strong> — PIN y biometría si el dispositivo lo permite.</li>
+    <li><strong>Exportar copia</strong> — crea un archivo para guardarlo donde quieras (Drive,
+      correo…). Con contraseña va cifrado y lleva un sello: si alguien lo modifica, la app no
+      lo acepta.</li>
+    <li><strong>Restaurar desde archivo</strong> — sustituye los datos actuales por los de la
+      copia. Antes de borrar nada, la app comprueba que el archivo está entero: si está
+      dañado, avisa y no cambia nada.</li>
   </ul>
   <figure>
     <img src="/uploads/cms/13_saludamg_backup.png" alt="Copia de seguridad" />
     <figcaption>Copia de seguridad</figcaption>
   </figure>
+  <h3>Bloqueo con huella o PIN</h3>
+  <ul>
+    <li>Al iniciar sesión, si tu teléfono tiene huella o cara registrada, la app te pregunta
+      <em>¿Abrir SaludAMG con tu huella?</em>. Si dices que sí, al abrirla te la pedirá.</li>
+    <li>En <strong>Configuración → Bloqueo</strong> eliges <em>Abrir con huella</em>,
+      <em>Pedir PIN al abrir</em> o las dos.</li>
+    <li>Si la huella falla, pulsa <em>Entrar con la contraseña de la cuenta</em>.</li>
+    <li>Si olvidas el PIN, pulsa <em>¿Olvidaste el PIN?</em> y escribe la contraseña de tu
+      cuenta AMG: se quita el PIN y puedes poner otro. Necesita internet.</li>
+    <li>Tras 5 PIN incorrectos hay que esperar unos segundos antes de volver a probar.</li>
+  </ul>
   <figure>
-    <img src="/uploads/cms/14_saludamg_bloqueo.png" alt="Bloqueo PIN" />
-    <figcaption>Bloqueo PIN / biometría</figcaption>
+    <img src="/uploads/cms/14_saludamg_bloqueo.png" alt="Bloqueo" />
+    <figcaption>Configuración → Bloqueo: huella y PIN</figcaption>
   </figure>
+  <figure>
+    <img src="/uploads/cms/30_saludamg_desbloqueo.png" alt="Pantalla de desbloqueo" />
+    <figcaption>Al abrir la app: PIN, huella o «¿Olvidaste el PIN?»</figcaption>
+  </figure>
+  <h3>Tus datos en el teléfono</h3>
+  <ul>
+    <li>Mediciones, medicación y ficha se guardan <strong>cifradas</strong> en el teléfono.</li>
+    <li>No se copian a la copia automática de Google: para guardarlas fuera del teléfono usa
+      <em>Exportar copia</em>.</li>
+    <li>Los informes y copias que compartes se borran solos del teléfono a los pocos minutos.</li>
+  </ul>
 
   <h2 id="ayuda">8. Ayuda en la app</h2>
   <p>Inicio → <strong>Ayuda</strong>: guía rápida, manual completo, FAQ y textos legales.</p>
@@ -287,7 +355,7 @@
 
   <h2 id="legal">9. Privacidad y condiciones</h2>
   <p>
-    Los textos legales propios de SaludAMG (versión 1.1 · 2026-10-28) están en la app
+    Los textos legales propios de SaludAMG (versión 1.2 · 2026-11-07) están en la app
     (Ayuda y Acerca de). Debes aceptarlos al crear la cuenta AMG.
   </p>
   <figure>
@@ -330,11 +398,31 @@
   </details>
   <details>
     <summary>¿Cómo exporto para mi médico?</summary>
-    <p>Resumen → menú ⋮ → Exportar Excel o Exportar PDF.</p>
+    <p>Resumen → menú ⋮, o Historial → botón de compartir → Exportar Excel o Exportar PDF.</p>
   </details>
   <details>
     <summary>¿Cómo restauro una copia?</summary>
-    <p>Configuración → Copia de seguridad → Importar. Sustituye los datos actuales.</p>
+    <p>Configuración → Copia de seguridad → Restaurar desde archivo. Sustituye los datos actuales; si el archivo está dañado, no cambia nada.</p>
+  </details>
+  <details>
+    <summary>Se me olvidó marcar la toma de anoche</summary>
+    <p>Abre Medicaciones: arriba sale «Pendientes de ayer». Pulsa «Tomado», ajusta la hora real con «Cambiar» y guarda. Cuenta para el día que tocaba.</p>
+  </details>
+  <details>
+    <summary>¿Puedo abrir la app con la huella?</summary>
+    <p>Sí. Te lo ofrece al iniciar sesión, y también en Configuración → Bloqueo. Si la huella falla, entras con la contraseña de tu cuenta AMG.</p>
+  </details>
+  <details>
+    <summary>Olvidé el PIN</summary>
+    <p>En la pantalla de desbloqueo pulsa «¿Olvidaste el PIN?» y escribe la contraseña de tu cuenta AMG (necesita internet). Se quita el PIN y puedes poner otro.</p>
+  </details>
+  <details>
+    <summary>Compartimos teléfono: ¿veremos los datos del otro?</summary>
+    <p>No. Cada cuenta AMG tiene sus propios datos en el teléfono. Cierra sesión antes de que entre la otra persona.</p>
+  </details>
+  <details>
+    <summary>La app me ha cerrado la sesión</summary>
+    <p>Pasa si el administrador ha bloqueado tu cuenta o le ha quitado SaludAMG; la app te dice el motivo. Tus datos siguen en el teléfono. Contacta con soporte si crees que es un error.</p>
   </details>
   <details>
     <summary>No llegan los recordatorios</summary>
