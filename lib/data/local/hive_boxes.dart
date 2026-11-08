@@ -1,15 +1,48 @@
-/// Cajas cifradas (AES). Las antiguas sin cifrar (`legacy*`) se migran y se
-/// borran al arrancar (ver `hive_setup.dart`).
-abstract final class HiveBoxes {
-  static const profile = 'profile_e';
-  static const readings = 'readings_e';
-  static const reminders = 'reminders_e';
-  static const importPrefs = 'import_prefs_e';
-  static const medications = 'medications_e';
-  static const medicationDoseLogs = 'medication_dose_logs_e';
-  static const medicationPrefs = 'medication_prefs_e';
-  static const appLock = 'app_lock_e';
+import 'dart:convert';
 
+import 'package:crypto/crypto.dart';
+
+/// Nombres de las cajas de datos.
+///
+/// Cada cuenta AMG tiene las suyas (sufijo con un resumen del usuario, sin el
+/// nombre en claro). Están cifradas (AES). Las antiguas se migran al arrancar
+/// o al entrar (ver `hive_setup.dart`):
+/// sin cifrar (`legacy*`) → cifradas sin dueño (`*_e`) → de la cuenta.
+abstract final class HiveBoxes {
+  static var _owner = '';
+
+  /// Sufijo de la cuenta activa ('' sin cuenta, p. ej. compilación sin panel).
+  static String get ownerSuffix => _owner;
+
+  static String suffixFor(String? username) {
+    final user = username?.trim().toLowerCase() ?? '';
+    if (user.isEmpty) return '';
+    final digest = sha256.convert(utf8.encode('saludamg|$user')).toString();
+    return '_${digest.substring(0, 16)}';
+  }
+
+  static void setOwner(String? username) => _owner = suffixFor(username);
+
+  static String get profile => '$sharedProfile$_owner';
+  static String get readings => '$sharedReadings$_owner';
+  static String get reminders => '$sharedReminders$_owner';
+  static String get importPrefs => '$sharedImportPrefs$_owner';
+  static String get medications => '$sharedMedications$_owner';
+  static String get medicationDoseLogs => '$sharedMedicationDoseLogs$_owner';
+  static String get medicationPrefs => '$sharedMedicationPrefs$_owner';
+  static String get appLock => '$sharedAppLock$_owner';
+
+  /// Cifradas, de antes de separar por cuenta.
+  static const sharedProfile = 'profile_e';
+  static const sharedReadings = 'readings_e';
+  static const sharedReminders = 'reminders_e';
+  static const sharedImportPrefs = 'import_prefs_e';
+  static const sharedMedications = 'medications_e';
+  static const sharedMedicationDoseLogs = 'medication_dose_logs_e';
+  static const sharedMedicationPrefs = 'medication_prefs_e';
+  static const sharedAppLock = 'app_lock_e';
+
+  /// Sin cifrar, de las primeras versiones.
   static const legacyProfile = 'profile';
   static const legacyReadings = 'readings';
   static const legacyReminders = 'reminders';

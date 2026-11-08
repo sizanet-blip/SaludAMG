@@ -6,6 +6,7 @@ import '../../core/utils/format.dart';
 import '../../domain/entities/blood_pressure_model.dart';
 import '../../domain/entities/user_profile.dart';
 import '../../domain/enums/health_enums.dart';
+import '../widgets/export_report_flow.dart';
 import '../widgets/reading_tile.dart';
 import '../widgets/salud_amg_app_bar.dart';
 import 'measurement_form_screen.dart';
@@ -58,6 +59,23 @@ class _HistoryScreenState extends State<HistoryScreen> {
       }
       return true;
     }).toList();
+  }
+
+  /// Periodo del filtro actual, para proponerlo al exportar.
+  DateTimeRange? get _periodRange {
+    final now = DateTime.now();
+    return switch (_period) {
+      _PeriodFilter.all => null,
+      _PeriodFilter.days7 => DateTimeRange(
+          start: now.subtract(const Duration(days: 7)),
+          end: now,
+        ),
+      _PeriodFilter.days30 => DateTimeRange(
+          start: now.subtract(const Duration(days: 30)),
+          end: now,
+        ),
+      _PeriodFilter.custom => _customRange,
+    };
   }
 
   bool _matchesPeriod(DateTime at, DateTime now) {
@@ -287,6 +305,19 @@ class _HistoryScreenState extends State<HistoryScreen> {
               _hasActiveFilters ? Icons.tune : Icons.tune_outlined,
               color: _hasActiveFilters ? AppColors.accent : null,
             ),
+          ),
+          PopupMenuButton<bool>(
+            tooltip: 'Exportar informe',
+            icon: const Icon(Icons.ios_share),
+            onSelected: (pdf) => startReportExport(
+              context,
+              pdf: pdf,
+              initialRange: _periodRange,
+            ),
+            itemBuilder: (context) => const [
+              PopupMenuItem(value: false, child: Text('Exportar Excel')),
+              PopupMenuItem(value: true, child: Text('Exportar PDF')),
+            ],
           ),
         ],
       ),

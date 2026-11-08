@@ -4,6 +4,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'app_scope.dart';
 import 'core/navigation.dart';
 import 'core/theme/app_theme.dart';
+import 'data/local/hive_setup.dart';
 import 'presentation/screens/auth/auth_gate_screen.dart';
 import 'presentation/screens/home_screen.dart';
 import 'presentation/screens/lock_screen.dart';
@@ -124,6 +125,26 @@ class _SaludAmgAppState extends State<SaludAmgApp> with WidgetsBindingObserver {
     }
   }
 
+  /// Tras iniciar sesión: abre los datos de esa cuenta (cada cuenta tiene los
+  /// suyos en el teléfono) y reprograma sus avisos. Acaba de escribir la
+  /// contraseña, así que no se le pide además PIN ni huella.
+  Future<void> _onAuthenticated() async {
+    _signOutMessage = null;
+    try {
+      await openDataBoxes(await AppAuthService().username());
+    } catch (error, stack) {
+      debugPrint('No se pudieron abrir los datos de la cuenta: $error\n$stack');
+    }
+    await _resyncNotifications();
+    if (!mounted) return;
+    HomeScreen.offerBiometricsAfterLogin = true;
+    resetAppNavigatorKey();
+    setState(() {
+      _authReady = true;
+      _unlocked = true;
+    });
+  }
+
   /// Sin internet no pasa nada: se sigue usando la app con los datos locales.
   /// Solo si el panel dice que la cuenta ya no vale, se cierra la sesión.
   Future<void> _checkAccountInBackground() async {
@@ -199,15 +220,7 @@ class _SaludAmgAppState extends State<SaludAmgApp> with WidgetsBindingObserver {
                 ? const HomeScreen()
                 : AuthGateScreen(
                     initialMessage: _signOutMessage,
-                    onAuthenticated: () {
-                      _signOutMessage = null;
-                      HomeScreen.offerBiometricsAfterLogin = true;
-                      resetAppNavigatorKey();
-                      setState(() {
-                        _authReady = true;
-                        _unlocked = !_lockEnabled;
-                      });
-                    },
+                    onAuthenticated: _onAuthenticated,
                   )),
       ),
     );

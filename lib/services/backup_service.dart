@@ -19,6 +19,7 @@ import '../domain/entities/sync_info.dart';
 import '../domain/entities/user_profile.dart';
 import '../domain/enums/health_enums.dart';
 import '../domain/repositories/repositories.dart';
+import 'temp_files.dart';
 
 /// Copia de seguridad JSON local (exportar / restaurar), opcionalmente cifrada.
 class BackupService {
@@ -80,12 +81,13 @@ class BackupService {
       name = 'saludamg_backup_$stamp.json';
       mime = 'application/json';
     } else {
-      final envelope = await _encryptPayload(plain, password.trim());
+      final envelope = await encryptPayload(plain, password.trim());
       bytes = utf8.encode(jsonEncode(envelope));
       name = 'saludamg_backup_$stamp.saludamg.json';
       mime = 'application/json';
     }
 
+    await TempFiles.cleanOld();
     final file = File('${directory.path}${Platform.pathSeparator}$name');
     await file.writeAsBytes(bytes, flush: true);
     await SharePlus.instance.share(
@@ -125,14 +127,15 @@ class BackupService {
       if (password.trim().isEmpty) {
         throw StateError('Esta copia está cifrada. Introduce la contraseña.');
       }
-      payload = await _decryptPayload(decoded, password.trim());
+      payload = await decryptPayload(decoded, password.trim());
     } else {
       payload = decoded;
     }
     return restoreFromMap(payload);
   }
 
-  Future<Map<String, dynamic>> _encryptPayload(
+  @visibleForTesting
+  Future<Map<String, dynamic>> encryptPayload(
     List<int> plain,
     String password,
   ) async {
@@ -144,13 +147,32 @@ class BackupService {
       'encrypted': true,
       'app': 'SaludAMG',
       'alg': 'AES-256-CBC',
+      'v': 2,
       'salt': base64Encode(salt),
       'iv': iv.base64,
       'data': encrypted.base64,
+      'mac': base64Encode(backupMac(key.bytes, iv.bytes, encrypted.bytes)),
     };
   }
 
-  Future<Map<String, dynamic>> _decryptPayload(
+  /// Sello (HMAC-SHA256) para saber si alguien ha tocado el archivo.
+  @visibleForTesting
+  static List<int> backupMac(List<int> key, List<int> iv, List<int> data) {
+    final macKey = sha256.convert([...key, ...utf8.encode('saludamg-mac')]);
+    return Hmac(sha256, macKey.bytes).convert([...iv, ...data]).bytes;
+  }
+
+  static bool _sameBytes(List<int> a, List<int> b) {
+    if (a.length != b.length) return false;
+    var diff = 0;
+    for (var i = 0; i < a.length; i++) {
+      diff |= a[i] ^ b[i];
+    }
+    return diff == 0;
+  }
+
+  @visibleForTesting
+  Future<Map<String, dynamic>> decryptPayload(
     Map<String, dynamic> envelope,
     String password,
   ) async {
@@ -158,8 +180,19 @@ class BackupService {
       final salt = base64Decode(envelope['salt'] as String);
       final iv = enc.IV.fromBase64(envelope['iv'] as String);
       final key = enc.Key(await _deriveKeyAsync(password, salt));
+      final data = enc.Encrypted.fromBase64(envelope['data'] as String);
+      // Copias nuevas llevan sello: si no cuadra, contraseña mal o archivo
+      // modificado. Las antiguas (sin sello) se siguen aceptando.
+      final mac = envelope['mac'];
+      if (mac is String &&
+          !_sameBytes(
+            base64Decode(mac),
+            backupMac(key.bytes, iv.bytes, data.bytes),
+          )) {
+        throw StateError('Sello no válido.');
+      }
       final decrypted = enc.Encrypter(enc.AES(key)).decryptBytes(
-        enc.Encrypted.fromBase64(envelope['data'] as String),
+        data,
         iv: iv,
       );
       final payload = jsonDecode(utf8.decode(decrypted));

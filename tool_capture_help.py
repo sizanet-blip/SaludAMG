@@ -185,7 +185,7 @@ def capture_app_screens() -> None:
         ("Ficha", "07_saludamg_ficha.png"),
         ("Recordatorios", "09_saludamg_recordatorios.png"),
         ("Datos a medir", "12_saludamg_datos_medir.png"),
-        ("Medicación (config)", "11_saludamg_med_config.png"),
+        ("Opciones de medicación", "11_saludamg_med_config.png"),
         ("Copia de seguridad", "13_saludamg_backup.png"),
         ("Bloqueo PIN", "14_saludamg_bloqueo.png"),
         ("Acerca de", "16_saludamg_acerca.png"),

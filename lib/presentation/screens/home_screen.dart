@@ -437,7 +437,7 @@ class ConfigHubScreen extends StatelessWidget {
                 onTap: () => _push(context, const ImportSettingsScreen()),
               ),
               AppNavTile(
-                title: 'Medicación (config)',
+                title: 'Opciones de medicación',
                 subtitle: 'Preferencias de tomas y botones',
                 icon: Icons.medication_liquid_outlined,
                 color: Colors.teal.shade700,

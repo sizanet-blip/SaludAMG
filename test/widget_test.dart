@@ -1,3 +1,6 @@
+import 'dart:convert';
+
+import 'package:crypto/crypto.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/date_symbol_data_local.dart';
@@ -222,6 +225,67 @@ void main() {
     await tester.tap(find.text('Resumen'));
     await tester.pumpAndSettle();
     expect(find.text('Añadir medición'), findsOneWidget);
+  });
+
+  group('copia cifrada', () {
+    BackupService service() => BackupService(
+          profiles: _MemoryProfiles(),
+          measurements: _MemoryMeasurements(),
+          reminders: _MemoryReminders(),
+          importPreferences: _MemoryImportPrefs(),
+          medications: _MemoryMedications(),
+          medicationDoseLogs: _MemoryDoseLogs(),
+          medicationPreferences: _MemoryMedPrefs(),
+        );
+    final plain = utf8.encode('{"app":"SaludAMG","readings":[]}');
+
+    test('se abre con la contraseña correcta', () async {
+      final envelope = await service().encryptPayload(plain, 'clave-1');
+      expect(envelope['mac'], isNotNull);
+      final back = await service().decryptPayload(envelope, 'clave-1');
+      expect(back['app'], 'SaludAMG');
+    });
+
+    test('si alguien la modifica, no se acepta', () async {
+      final envelope = await service().encryptPayload(plain, 'clave-1');
+      final data = base64Decode(envelope['data'] as String);
+      data[0] ^= 1;
+      envelope['data'] = base64Encode(data);
+      await expectLater(
+        service().decryptPayload(envelope, 'clave-1'),
+        throwsA(isA<StateError>()),
+      );
+    });
+
+    test('contraseña incorrecta', () async {
+      final envelope = await service().encryptPayload(plain, 'clave-1');
+      await expectLater(
+        service().decryptPayload(envelope, 'otra'),
+        throwsA(isA<StateError>()),
+      );
+    });
+  });
+
+  test('PIN con sal propia; el formato antiguo sigue valiendo y se actualiza',
+      () async {
+    final repo = _MemoryAppLock();
+    final lock = AppLockService(repo);
+    final a = AppLockService.hashPin('2580');
+    final b = AppLockService.hashPin('2580');
+    expect(a, isNot(b)); // misma clave, distinto guardado
+    final config = AppLockConfig.defaults().copyWith(enabled: true, pinHash: a);
+    expect(lock.verifyPin('2580', config), isTrue);
+    expect(lock.verifyPin('0000', config), isFalse);
+
+    // PIN guardado por versiones anteriores.
+    final legacy = sha256.convert(utf8.encode('saludamg|1234')).toString();
+    await repo.save(
+      AppLockConfig.defaults().copyWith(enabled: true, pinHash: legacy),
+    );
+    expect(lock.verifyPin('1234', repo.current()), isTrue);
+    await lock.upgradePinIfLegacy('1234');
+    expect(AppLockService.isLegacyHash(repo.current().pinHash), isFalse);
+    expect(lock.verifyPin('1234', repo.current()), isTrue);
   });
 
   group('restaurar copia', () {

@@ -135,7 +135,7 @@ abstract final class HelpContent {
           'Resumen — última toma, evolución e informes.',
           'Historial — listado; filtros con el icono tune de la cabecera.',
           'Medicaciones — tratamientos, tomas del día y preferencias (tune).',
-          'Configuración → Ficha, Recordatorios, Datos a medir, Medicación (config).',
+          'Configuración → Ficha, Recordatorios, Datos a medir, Opciones de medicación.',
           'Configuración → Copia de seguridad, Bloqueo, Cuenta AMG, Acerca de.',
           'Ayuda — guía, manual, FAQ y textos legales.',
         ],
@@ -151,7 +151,7 @@ abstract final class HelpContent {
         title: '7. Medicación y recordatorios',
         paragraphs: [
           'Alta de medicamentos con pautas, horarios y, si lo activas, control de tomas y stock.',
-          'En Medicación (config) defines botón en inicio, seguimiento de dosis y avisos de pedida al médico.',
+          'En Opciones de medicación defines botón en inicio, seguimiento de dosis y avisos de pedida al médico.',
           'Recordatorios (en Configuración) y notificaciones locales del sistema.',
         ],
       ),
@@ -165,7 +165,7 @@ abstract final class HelpContent {
       HelpDocSection(
         title: '9. Exportación y copia de seguridad',
         bullets: [
-          'Resumen → Exportar Excel / PDF: informes para compartir o archivar (no sustituyen la historia clínica).',
+          'Resumen o Historial → Exportar Excel / PDF: informes para compartir o archivar (no sustituyen la historia clínica).',
           'Configuración → Copia de seguridad: archivo cifrado; al importar sustituye los datos actuales — exporta antes si quieres conservar lo de ahora.',
         ],
       ),

@@ -4,6 +4,7 @@ import 'dart:io';
 import 'dart:math';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -57,7 +58,40 @@ class AppAuthService {
 
   Future<SharedPreferences> get _prefs => SharedPreferences.getInstance();
 
-  Future<String?> token() async => (await _prefs).getString(_kToken);
+  /// La sesión va en el almacén seguro del sistema, no en las preferencias.
+  static const _secure = FlutterSecureStorage();
+
+  Future<String?> token() async {
+    final p = await _prefs;
+    // Versiones anteriores la guardaban en preferencias: se mueve.
+    final old = p.getString(_kToken);
+    if (old != null && old.isNotEmpty) {
+      await _saveToken(old);
+      await p.remove(_kToken);
+      return old;
+    }
+    // Sin usuario guardado es una instalación nueva (en iOS el almacén
+    // seguro sobrevive a desinstalar): no vale una sesión antigua.
+    if ((p.getString(_kUsername) ?? '').trim().isEmpty) return null;
+    try {
+      return await _secure.read(key: _kToken);
+    } catch (e) {
+      debugPrint('[AppAuth] no se pudo leer la sesión: $e');
+      return null;
+    }
+  }
+
+  Future<void> _saveToken(String value) =>
+      _secure.write(key: _kToken, value: value);
+
+  Future<void> _deleteToken() async {
+    await (await _prefs).remove(_kToken);
+    try {
+      await _secure.delete(key: _kToken);
+    } catch (e) {
+      debugPrint('[AppAuth] no se pudo borrar la sesión: $e');
+    }
+  }
 
   Future<String?> username() async => (await _prefs).getString(_kUsername);
 
@@ -253,7 +287,7 @@ class AppAuthService {
           _kStatus,
           accessPending ? 'app_access_pending' : 'pending',
         );
-        await p.remove(_kToken);
+        await _deleteToken();
         return AppAuthResult(
           ok: false,
           pending: true,
@@ -271,7 +305,7 @@ class AppAuthService {
         final p = await _prefs;
         await p.setString(_kUsername, username.trim());
         await p.setString(_kStatus, 'no_app_access');
-        await p.remove(_kToken);
+        await _deleteToken();
         return AppAuthResult(
           ok: false,
           needsAppAccess: true,
@@ -286,7 +320,7 @@ class AppAuthService {
         final p = await _prefs;
         await p.setString(_kUsername, username.trim());
         await p.setString(_kStatus, 'inactive');
-        await p.remove(_kToken);
+        await _deleteToken();
         return AppAuthResult(
           ok: false,
           pending: true,
@@ -300,7 +334,7 @@ class AppAuthService {
           data['token'] != null) {
         final token = data['token'].toString();
         final p = await _prefs;
-        await p.setString(_kToken, token);
+        await _saveToken(token);
         await p.setBool(_kActivated, true);
         await p.setString(_kUsername, username.trim());
         await p.setString(_kStatus, status ?? 'active');
@@ -376,7 +410,7 @@ class AppAuthService {
         await p.setString(_kUsername, username.trim());
         await p.setString(_kStatus, 'app_access_pending');
         await p.setBool(_kActivated, true);
-        await p.remove(_kToken);
+        await _deleteToken();
         await _syncLocalLegalAcceptance();
         return AppAuthResult(
           ok: true,
@@ -477,7 +511,7 @@ class AppAuthService {
   /// Borra la sesión local al instante (antes de cambiar de pantalla).
   Future<void> clearLocalSession() async {
     final p = await _prefs;
-    await p.remove(_kToken);
+    await _deleteToken();
     await p.remove(_kStatus);
     await p.remove(_kLastCheck);
   }

@@ -124,6 +124,7 @@ class _LockScreenState extends State<LockScreen> {
     if (!_ready || config == null || _blocked) return;
     final lock = AppScope.of(context).appLock;
     if (lock.verifyPin(_pin.text.trim(), config)) {
+      await lock.upgradePinIfLegacy(_pin.text.trim());
       await _unlock();
       return;
     }

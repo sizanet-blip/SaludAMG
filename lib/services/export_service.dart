@@ -16,6 +16,7 @@ import '../domain/entities/medication.dart';
 import '../domain/entities/medication_dose_log.dart';
 import '../domain/entities/sync_info.dart';
 import '../domain/entities/user_profile.dart';
+import 'temp_files.dart';
 
 /// Informes con la ficha delante y el desglose de lecturas detrás.
 class ExportService {
@@ -584,6 +585,7 @@ class ExportService {
       value == null ? TextCellValue('') : DoubleCellValue(value);
 
   Future<File> _writeTemp(String name, List<int> bytes) async {
+    await TempFiles.cleanOld();
     final directory = await getTemporaryDirectory();
     final file = File('${directory.path}${Platform.pathSeparator}$name');
     await file.writeAsBytes(bytes, flush: true);

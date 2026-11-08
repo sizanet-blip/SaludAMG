@@ -40,8 +40,9 @@ void main() {
     final key = Hive.generateSecureKey();
     await openEncryptedBox<BloodPressureModel>(
       HiveBoxes.readings,
-      HiveBoxes.legacyReadings,
-      HiveAesCipher(key),
+      legacyName: HiveBoxes.legacyReadings,
+      sharedName: HiveBoxes.sharedReadings,
+      cipher: HiveAesCipher(key),
     );
 
     expect(await Hive.boxExists(HiveBoxes.legacyReadings), isFalse);
@@ -61,6 +62,53 @@ void main() {
     );
     expect(again.get('r1')?.systolic, 125);
     await Hive.close();
+  });
+
+  test('cada cuenta ve solo sus datos; los de antes pasan a la primera',
+      () async {
+    final dir = await Directory.systemTemp.createTemp('salud_amg_cuentas');
+    Hive.init(dir.path);
+    registerHiveAdapters();
+    final cipher = HiveAesCipher(Hive.generateSecureKey());
+    BloodPressureModel reading(String id) => BloodPressureModel(
+          id: id,
+          systolic: 120,
+          diastolic: 80,
+          pulse: null,
+          weightKg: null,
+          measuredAt: DateTime(2026, 11, 2, 9),
+          context: MeasurementContext.unspecified,
+          notes: '',
+          syncInfo: const SyncInfo.manual(),
+        );
+
+    // Datos de antes de separar por cuenta (cifrados, sin dueño).
+    final shared = await Hive.openBox<BloodPressureModel>(
+      HiveBoxes.sharedReadings,
+      encryptionCipher: cipher,
+    );
+    await shared.put('vieja', reading('vieja'));
+    await shared.close();
+
+    await openDataBoxes('Ana', cipher: cipher);
+    final ana = Hive.box<BloodPressureModel>(HiveBoxes.readings);
+    expect(ana.keys, ['vieja']);
+    await ana.put('de_ana', reading('de_ana'));
+    expect(await Hive.boxExists(HiveBoxes.sharedReadings), isFalse);
+
+    await openDataBoxes('Luis', cipher: cipher);
+    expect(Hive.box<BloodPressureModel>(HiveBoxes.readings).isEmpty, isTrue);
+
+    await openDataBoxes('ana', cipher: cipher); // mayúsculas no importan
+    expect(
+      Hive.box<BloodPressureModel>(HiveBoxes.readings).keys.toSet(),
+      {'vieja', 'de_ana'},
+    );
+    // El nombre de usuario no aparece en los archivos.
+    final names = dir.listSync().map((f) => f.path.toLowerCase()).join(' ');
+    expect(names.contains('ana'), isFalse);
+    await Hive.close();
+    HiveBoxes.setOwner(null);
   });
 
   test('bloqueo activo con PIN, solo con huella o con ambos', () {
