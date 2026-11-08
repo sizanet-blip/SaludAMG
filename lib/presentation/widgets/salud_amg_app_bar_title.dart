@@ -5,7 +5,7 @@ import '../../core/theme/app_theme.dart';
 /// Marca: mismo wordmark (tamaño y aspecto) en inicio y en el resto.
 abstract final class SaludAmgBrand {
   static const String wordmarkAsset = 'assets/branding/saludamg-wordmark.png';
-  static const double wordmarkAssetWidth = 933;
+  static const double wordmarkAssetWidth = 839;
   static const double wordmarkAssetHeight = 254;
 
   /// Altura visual del wordmark en home, auth y AppBar.

@@ -122,10 +122,13 @@ def capture_auth() -> None:
         shot("05_saludamg_condiciones.png")
         back()
 
-    if tap_label("digo") or tap_label("recuperación") or tap_label("recuperacion"):
+    # Recuperar contraseña: enlace por email (desde la pantalla de acceso).
+    tap_label("Ya tengo cuenta") or back()
+    time.sleep(0.4)
+    if tap_label("Olvidé"):
         time.sleep(0.4)
         shot("06_saludamg_recuperar.png")
-        tap_label("Entrar")
+        tap_label("Ya tengo cuenta") or back()
 
 
 def _open_from_home(label: str) -> bool:

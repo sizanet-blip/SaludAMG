@@ -51,12 +51,12 @@ abstract final class HelpContent {
         ],
       ),
       HelpDocSection(
-        title: '2. Cuenta AMG (si está configurada)',
+        title: '2. Cuenta AMG',
         bullets: [
-          'Al abrir la app puede pedirte usuario y contraseña (cuenta AMG).',
-          'Regístrate, acepta privacidad y condiciones, y espera la aprobación del administrador si la cuenta queda pendiente.',
-          'Usa un email válido: sirve para recuperar la contraseña.',
-          'Sin API configurada en el build, puedes usar la app directamente.',
+          'Entras con tu cuenta AMG: la misma para todas las apps AMG.',
+          'Primera vez: Crear cuenta con usuario, contraseña (mínimo 6) y email repetido; acepta privacidad y condiciones.',
+          'Si ya tienes cuenta de otra app AMG, entra con ella y envía la solicitud al panel.',
+          'El administrador aprueba el acceso. Si olvidas la contraseña, te enviamos un enlace a tu email.',
         ],
       ),
       HelpDocSection(
@@ -98,25 +98,27 @@ abstract final class HelpContent {
         title: '1. Introducción',
         paragraphs: [
           '$appName guarda tus datos en el dispositivo. El panel AMG solo recibe datos de cuenta/instalación si el build está configurado (usuario, versión, device); no se envían mediciones ni medicación al registrarte.',
-          'La app está pensada para adultos. Úsala bajo tu responsabilidad y contrastá datos antes de decisiones sanitarias.',
+          'La app está pensada para adultos. Úsala bajo tu responsabilidad y contrasta los datos antes de decisiones sanitarias.',
         ],
       ),
       HelpDocSection(
         title: '2. Cuenta AMG y acceso',
         paragraphs: [
-          'Si el build incluye la URL de autenticación, al abrir verás login/registro.',
+          'Para usar $appName necesitas una cuenta AMG. Es la misma para SaludAMG, TiroAMG, MotoAMG y Simulador 112: si ya tienes una, no crees otra.',
         ],
         bullets: [
-          'Registro: usuario, contraseña, email repetido; aceptar privacidad y condiciones.',
-          'Pendiente: un administrador debe activar la cuenta en el panel antes de entrar.',
-          'Contraseña olvidada: pide en la pantalla de acceso un enlace a tu email.',
-          'Instalación: en Acerca de (Configuración) puedes asociar un email de contacto (opcional) y ver el ID de dispositivo.',
+          'Primera vez: Crear cuenta con usuario, contraseña (mínimo 6 caracteres) y tu email dos veces. El email es obligatorio: sirve para recuperar la contraseña.',
+          'Acepta la política de privacidad y las condiciones y pulsa «Crear y solicitar acceso».',
+          'Cuenta de otra app AMG: entra con tu usuario y contraseña, acepta las condiciones y pulsa «Enviar solicitud al panel».',
+          'El administrador aprueba cada solicitud. Mientras tanto verás «Pendiente de aprobación».',
+          'Contraseña olvidada: pulsa «Olvidé mi contraseña» y abre el enlace que te llegará al email.',
+          'En Acerca de (Configuración) ves la versión y el ID de dispositivo.',
         ],
       ),
       HelpDocSection(
         title: '3. Pantalla de inicio',
         paragraphs: [
-          'La pantalla principal muestra el wordmark y los botones de acción Medicación y Medición (el de medicación se puede ocultar en preferencias).',
+          'La pantalla principal muestra el logotipo de SaludAMG y los botones de acción Medicación y Medición (el de medicación se puede ocultar en preferencias).',
           'Debajo tienes el menú principal: Resumen, Historial, Medicaciones, Configuración y Ayuda. Cerrar sesión aparece si hay cuenta AMG.',
         ],
       ),
@@ -195,17 +197,17 @@ abstract final class HelpContent {
     HelpFaqItem(
       question: '¿SaludAMG sustituye al médico?',
       answer:
-          'No. Es una herramienta de seguimiento personal. Contrastá siempre con un profesional sanitario.',
+          'No. Es una herramienta de seguimiento personal. Contrasta siempre con un profesional sanitario.',
     ),
     HelpFaqItem(
       question: '¿Por qué me pide cuenta al abrir?',
       answer:
-          'Si el build tiene autenticación AMG configurada, el acceso requiere usuario/contraseña aprobados. Sin esa configuración, la app abre directamente.',
+          'Tus datos se guardan en el móvil, pero el acceso necesita tu cuenta AMG aprobada por el administrador. Es la misma cuenta para todas las apps AMG.',
     ),
     HelpFaqItem(
       question: 'Me he registrado y no puedo entrar',
       answer:
-          'La cuenta puede estar pendiente de aprobación. Cuando el administrador la active en el panel, inicia sesión con tu usuario y contraseña.',
+          'El administrador tiene que aprobar tu acceso a $appName. Cuando lo active, inicia sesión con tu usuario y contraseña.',
     ),
     HelpFaqItem(
       question: 'Olvidé la contraseña',
