@@ -509,6 +509,7 @@ class ExportService {
     'Medicación',
     'Horario',
     'Estado',
+    'Hora de toma',
     'Registrado',
   ];
 
@@ -544,6 +545,9 @@ class ExportService {
       TextCellValue(name ?? log.medicationId),
       TextCellValue(formatDateTime(log.scheduledAt)),
       TextCellValue(log.status.label),
+      TextCellValue(
+        log.effectiveTakenAt == null ? '' : formatDateTime(log.effectiveTakenAt!),
+      ),
       TextCellValue(formatDateTime(log.recordedAt)),
     ];
   }
@@ -574,6 +578,7 @@ class ExportService {
       name ?? log.medicationId,
       formatDateTime(log.scheduledAt),
       log.status.label,
+      log.effectiveTakenAt == null ? '—' : formatDateTime(log.effectiveTakenAt!),
       formatDateTime(log.recordedAt),
     ];
   }

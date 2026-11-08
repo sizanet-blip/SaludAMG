@@ -148,10 +148,22 @@ class _MedicationsScreenState extends State<MedicationsScreen> {
     );
   }
 
+  bool _hasPendingOn(Medication med, DateTime day) {
+    final deps = AppScope.of(context);
+    for (final minutes in med.sortedMinutes) {
+      final slot = day.add(Duration(minutes: minutes));
+      if (deps.medicationDoseLogs.findForSlot(med.id, slot) == null) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   Future<void> _recordDose({
     required Medication medication,
     required DateTime scheduledAt,
     required DoseStatus status,
+    DateTime? takenAt,
   }) async {
     final deps = AppScope.of(context);
     // Recarga fresca: evita stock incorrecto con toques rápidos.
@@ -167,6 +179,7 @@ class _MedicationsScreenState extends State<MedicationsScreen> {
       scheduledAt: scheduledAt,
       status: status,
       recordedAt: DateTime.now(),
+      takenAt: status == DoseStatus.taken ? takenAt : null,
     );
     await deps.medicationDoseLogs.save(log);
 
@@ -200,9 +213,117 @@ class _MedicationsScreenState extends State<MedicationsScreen> {
     _reload();
   }
 
+  /// «Tomado»: pregunta cuándo (por defecto, ahora). Sirve para la toma
+  /// olvidada de las 22:00 que se toma a las 00:30 del día siguiente.
+  Future<void> _onStatus(
+    Medication medication,
+    DateTime scheduledAt,
+    DoseStatus status,
+  ) async {
+    DateTime? takenAt;
+    if (status == DoseStatus.taken) {
+      takenAt = await _askTakenAt(medication, scheduledAt);
+      if (takenAt == null) return;
+    }
+    await _recordDose(
+      medication: medication,
+      scheduledAt: scheduledAt,
+      status: status,
+      takenAt: takenAt,
+    );
+  }
+
+  Future<DateTime?> _askTakenAt(
+    Medication medication,
+    DateTime scheduledAt,
+  ) {
+    final now = DateTime.now();
+    var takenAt = DateTime(now.year, now.month, now.day, now.hour, now.minute);
+    // Desde un día antes de la hora prevista hasta ahora.
+    final first = scheduledAt.subtract(const Duration(days: 1));
+    return showDialog<DateTime>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setLocal) => AlertDialog(
+          title: Text('Tomado · ${medication.name}'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Toma prevista: ${dayLabel(scheduledAt, now)} '
+                '${formatClock(scheduledAt.hour * 60 + scheduledAt.minute)}',
+                style: const TextStyle(color: AppColors.subtitle),
+              ),
+              const SizedBox(height: 12),
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: const Icon(Icons.schedule),
+                title: const Text('¿Cuándo la tomaste?'),
+                subtitle: Text(
+                  '${dayLabel(takenAt, now)} '
+                  '${formatClock(takenAt.hour * 60 + takenAt.minute)}',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.title,
+                  ),
+                ),
+                trailing: const Text('Cambiar'),
+                onTap: () async {
+                  final date = await showDatePicker(
+                    context: ctx,
+                    initialDate: takenAt,
+                    firstDate: DateTime(first.year, first.month, first.day),
+                    lastDate: now,
+                  );
+                  if (date == null || !ctx.mounted) return;
+                  final time = await showTimePicker(
+                    context: ctx,
+                    initialTime: TimeOfDay.fromDateTime(takenAt),
+                  );
+                  if (time == null) return;
+                  var picked = DateTime(
+                    date.year,
+                    date.month,
+                    date.day,
+                    time.hour,
+                    time.minute,
+                  );
+                  if (picked.isAfter(now)) picked = takenAt;
+                  setLocal(() => takenAt = picked);
+                },
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Cancelar'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(ctx, takenAt),
+              child: const Text('Guardar'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final today = DateTime.now();
+    final yesterday = DateTime(today.year, today.month, today.day)
+        .subtract(const Duration(days: 1));
+    final pendingYesterday = !_ready || !_prefs.trackDoses
+        ? <Medication>[]
+        : _medications
+            .where(
+              (med) =>
+                  med.isActiveOn(yesterday) &&
+                  _hasPendingOn(med, yesterday),
+            )
+            .toList();
     final activeToday =
         _medications.where((med) => med.isActiveOn(today)).toList();
     final others =
@@ -270,6 +391,34 @@ class _MedicationsScreenState extends State<MedicationsScreen> {
               : ListView(
                   padding: const EdgeInsets.fromLTRB(20, 8, 20, 96),
                   children: [
+                    if (pendingYesterday.isNotEmpty) ...[
+                      const Text(
+                        'Pendientes de ayer',
+                        style: TextStyle(
+                          color: AppColors.title,
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      const Text(
+                        '¿Se te olvidó marcarla o la tomaste pasada la '
+                        'medianoche? Márcala aquí con la hora real.',
+                        style: TextStyle(color: AppColors.subtitle),
+                      ),
+                      const SizedBox(height: 8),
+                      for (final med in pendingYesterday) ...[
+                        _TodayMedicationCard(
+                          medication: med,
+                          day: yesterday,
+                          onlyPending: true,
+                          onStatus: (scheduledAt, status) =>
+                              _onStatus(med, scheduledAt, status),
+                        ),
+                        const SizedBox(height: 8),
+                      ],
+                      const SizedBox(height: 8),
+                    ],
                     if (_prefs.trackDoses && activeToday.isNotEmpty) ...[
                       const Text(
                         'Hoy',
@@ -283,11 +432,9 @@ class _MedicationsScreenState extends State<MedicationsScreen> {
                       for (final med in activeToday) ...[
                         _TodayMedicationCard(
                           medication: med,
-                          onStatus: (scheduledAt, status) => _recordDose(
-                            medication: med,
-                            scheduledAt: scheduledAt,
-                            status: status,
-                          ),
+                          day: DateTime(today.year, today.month, today.day),
+                          onStatus: (scheduledAt, status) =>
+                              _onStatus(med, scheduledAt, status),
                         ),
                         const SizedBox(height: 8),
                       ],
@@ -399,17 +546,24 @@ class _AdherenceCard extends StatelessWidget {
 class _TodayMedicationCard extends StatelessWidget {
   const _TodayMedicationCard({
     required this.medication,
+    required this.day,
     required this.onStatus,
+    this.onlyPending = false,
   });
 
   final Medication medication;
+
+  /// Día de los horarios (medianoche).
+  final DateTime day;
+
+  /// «Pendientes de ayer»: oculta los horarios ya marcados.
+  final bool onlyPending;
   final void Function(DateTime scheduledAt, DoseStatus status) onStatus;
 
   @override
   Widget build(BuildContext context) {
     final deps = AppScope.of(context);
     final now = DateTime.now();
-    final day = DateTime(now.year, now.month, now.day);
 
     return Card(
       child: Padding(
@@ -439,6 +593,10 @@ class _TodayMedicationCard extends StatelessWidget {
                     medication.id,
                     scheduledAt,
                   );
+                  if (onlyPending && log != null) {
+                    return const SizedBox.shrink();
+                  }
+                  final takenAt = log?.effectiveTakenAt;
                   return Padding(
                     padding: const EdgeInsets.only(bottom: 8),
                     child: Row(
@@ -452,7 +610,10 @@ class _TodayMedicationCard extends StatelessWidget {
                         ),
                         Expanded(
                           child: Text(
-                            log?.status.label ?? 'Pendiente',
+                            takenAt == null
+                                ? (log?.status.label ?? 'Pendiente')
+                                : '${log!.status.label} '
+                                    '${_takenLabel(takenAt, scheduledAt, now)}',
                             style: TextStyle(
                               color: log == null
                                   ? AppColors.subtitle
@@ -484,6 +645,24 @@ class _TodayMedicationCard extends StatelessWidget {
       ),
     );
   }
+}
+
+/// «hoy», «ayer» o la fecha.
+String dayLabel(DateTime value, DateTime now) {
+  final d = DateTime(value.year, value.month, value.day);
+  final today = DateTime(now.year, now.month, now.day);
+  if (d == today) return 'hoy';
+  if (d == today.subtract(const Duration(days: 1))) return 'ayer';
+  return formatDayMonth(value);
+}
+
+/// Hora real de la toma; con «ayer» o la fecha si no es el día previsto.
+String _takenLabel(DateTime takenAt, DateTime scheduledAt, DateTime now) {
+  final clock = formatClock(takenAt.hour * 60 + takenAt.minute);
+  final sameDay = takenAt.year == scheduledAt.year &&
+      takenAt.month == scheduledAt.month &&
+      takenAt.day == scheduledAt.day;
+  return sameDay ? clock : '${dayLabel(takenAt, now)} $clock';
 }
 
 class _MedicationTile extends StatelessWidget {

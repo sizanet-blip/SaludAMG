@@ -8,6 +8,7 @@ class MedicationDoseLog {
     required this.scheduledAt,
     required this.status,
     required this.recordedAt,
+    this.takenAt,
   });
 
   final String id;
@@ -18,12 +19,21 @@ class MedicationDoseLog {
   final DoseStatus status;
   final DateTime recordedAt;
 
+  /// Cuándo se tomó de verdad (p. ej. la de las 22:00 a las 00:30 del día
+  /// siguiente). Nulo en registros antiguos: se usa [recordedAt].
+  final DateTime? takenAt;
+
+  /// Hora real de la toma, solo si está como tomada.
+  DateTime? get effectiveTakenAt =>
+      status == DoseStatus.taken ? (takenAt ?? recordedAt) : null;
+
   Map<String, dynamic> toJson() => {
         'id': id,
         'medicationId': medicationId,
         'scheduledAt': scheduledAt.toIso8601String(),
         'status': status.index,
         'recordedAt': recordedAt.toIso8601String(),
+        if (takenAt != null) 'takenAt': takenAt!.toIso8601String(),
       };
 
   factory MedicationDoseLog.fromJson(Map<String, dynamic> json) {
@@ -38,6 +48,7 @@ class MedicationDoseLog {
           : DoseStatus.taken,
       recordedAt: DateTime.tryParse(json['recordedAt'] as String? ?? '') ??
           DateTime.now(),
+      takenAt: DateTime.tryParse(json['takenAt'] as String? ?? ''),
     );
   }
 }
