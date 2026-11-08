@@ -8,17 +8,24 @@ import 'app.dart';
 import 'app_scope.dart';
 import 'data/local/hive_setup.dart';
 import 'data/repositories/hive_repositories.dart';
+import 'services/app_auth_service.dart';
 import 'services/app_lock_service.dart';
 import 'services/backup_service.dart';
 import 'services/export_service.dart';
 import 'services/health_sync_service.dart';
 import 'services/notification_service.dart';
+import 'services/temp_files.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initializeDateFormatting('es_ES');
   await configureLocalTimezone();
-  await initHive();
+  // Datos de la última cuenta que entró en este teléfono (si hay).
+  final lastUser =
+      AppAuthService.isConfigured ? await AppAuthService().username() : null;
+  await initHive(username: lastUser);
+  // Copias e informes compartidos en otra sesión: fuera del teléfono.
+  await TempFiles.cleanOld();
 
   final notifications = NotificationService();
   final reminders = HiveReminderRepository();

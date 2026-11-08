@@ -1,12 +1,16 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../app.dart';
 import '../../app_scope.dart';
 import '../../core/theme/app_theme.dart';
+import '../../legal/privacy_content.dart';
 import '../../services/app_auth_service.dart';
+import '../../services/app_update_service.dart';
 import '../../services/debug_seed_service.dart';
 import '../widgets/app_nav.dart';
+import '../widgets/app_update_dialogs.dart';
 import '../widgets/salud_amg_app_bar.dart';
 import '../widgets/salud_amg_app_bar_title.dart';
 import 'about_app_screen.dart';
@@ -15,6 +19,7 @@ import 'cuenta_amg_screen.dart';
 import 'help/ayuda_screen.dart';
 import 'history_screen.dart';
 import 'import_settings_screen.dart';
+import 'legal_document_screen.dart';
 import 'lock_settings_screen.dart';
 import 'medication_preferences_screen.dart';
 import 'measurement_form_screen.dart';
@@ -24,13 +29,170 @@ import 'reminders_screen.dart';
 import 'resumen_screen.dart';
 
 /// Inicio estilo TiroAMG: lo principal aquí; el resto en Configuración.
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
-  Future<void> _push(BuildContext context, Widget page) {
-    return Navigator.of(context).push(
+  /// Se activa al iniciar sesión: el Inicio ofrece abrir la app con huella.
+  static var offerBiometricsAfterLogin = false;
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  static var _updateChecked = false;
+  final _updateService = const AppUpdateService();
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!await _checkLegalUpdate()) return;
+      await _offerBiometrics();
+      await _checkUpdatesOnStart();
+    });
+  }
+
+  static const _kBioDeclined = 'biometric_offer_declined';
+
+  /// Política nueva tras actualizar la app: se pide aceptarla una vez.
+  /// Devuelve `false` si ha cerrado la sesión.
+  Future<bool> _checkLegalUpdate() async {
+    final auth = AppAuthService();
+    if (!await auth.needsLegalUpdate() || !mounted) return true;
+    final choice = await showDialog<String>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => PopScope(
+        canPop: false,
+        child: AlertDialog(
+          title: const Text('Política de privacidad actualizada'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Hemos actualizado la política de privacidad '
+                  '(versión ${PrivacyContent.version}). Lo principal:',
+                ),
+                const SizedBox(height: 8),
+                const Text(PrivacyContent.cambios),
+                const SizedBox(height: 8),
+                TextButton(
+                  style: TextButton.styleFrom(padding: EdgeInsets.zero),
+                  onPressed: () => Navigator.of(ctx).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => const LegalDocumentScreen(
+                        kind: LegalDocumentKind.privacy,
+                      ),
+                    ),
+                  ),
+                  child: const Text('Leer la política completa'),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, 'logout'),
+              child: const Text('Cerrar sesión'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(ctx, 'accept'),
+              child: const Text('Acepto'),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (choice == 'accept') {
+      await auth.acceptCurrentLegal();
+      return true;
+    }
+    await auth.logout();
+    if (mounted) SaludAmgApp.signOut(context);
+    return false;
+  }
+
+  /// Tras iniciar sesión, una sola vez: «¿Abrir SaludAMG con tu huella?».
+  /// Si dice «Ahora no» no se vuelve a preguntar (queda en Configuración).
+  Future<void> _offerBiometrics() async {
+    if (!HomeScreen.offerBiometricsAfterLogin) return;
+    HomeScreen.offerBiometricsAfterLogin = false;
+    final lockService = AppScope.of(context).appLock;
+    if (lockService.current().useBiometrics) return;
+    final prefs = await SharedPreferences.getInstance();
+    if (prefs.getBool(_kBioDeclined) ?? false) return;
+    if (!await lockService.canCheckBiometrics() || !mounted) return;
+    final accept = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        icon: const Icon(Icons.fingerprint, size: 40),
+        title: const Text('¿Abrir SaludAMG con tu huella?'),
+        content: const Text(
+          'Así nadie más puede ver tus datos de salud en este teléfono. '
+          'Si la huella falla, entras con la contraseña de tu cuenta AMG. '
+          'Puedes cambiarlo en Configuración → Bloqueo.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Ahora no'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Activar'),
+          ),
+        ],
+      ),
+    );
+    if (accept != true) {
+      await prefs.setBool(_kBioDeclined, true);
+      return;
+    }
+    if (!await lockService.authenticateBiometrics()) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('No se ha podido comprobar la huella. Puedes '
+                'activarla en Configuración → Bloqueo.'),
+          ),
+        );
+      }
+      return;
+    }
+    await lockService.save(lockService.current().copyWith(useBiometrics: true));
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Huella activada.')),
+    );
+  }
+
+  /// Una vez por arranque (antes solo se miraba al abrir Resumen).
+  Future<void> _checkUpdatesOnStart() async {
+    if (_updateChecked || !AppUpdateService.usesServerUpdates) return;
+    _updateChecked = true;
+    await Future<void>.delayed(const Duration(milliseconds: 1200));
+    if (!mounted) return;
+    final result = await _updateService.checkForUpdates();
+    if (!mounted || !result.hasUpdate || result.info == null) return;
+    await showAppUpdateDialog(
+      context,
+      service: _updateService,
+      info: result.info!,
+      force: result.forceUpdate,
+      currentVersion: result.currentVersion,
+      currentBuild: result.currentBuild,
+    );
+  }
+
+  /// Al volver se repinta: p. ej. si se quitó el botón «Medicación».
+  Future<void> _push(BuildContext context, Widget page) async {
+    await Navigator.of(context).push(
       MaterialPageRoute<void>(builder: (_) => page),
     );
+    if (mounted) setState(() {});
   }
 
   Future<void> _openMeasurement(BuildContext context) {
@@ -338,7 +500,7 @@ class ConfigHubScreen extends StatelessWidget {
                 onTap: () => _push(context, const ImportSettingsScreen()),
               ),
               AppNavTile(
-                title: 'Medicación (config)',
+                title: 'Opciones de medicación',
                 subtitle: 'Preferencias de tomas y botones',
                 icon: Icons.medication_liquid_outlined,
                 color: Colors.teal.shade700,
@@ -359,8 +521,8 @@ class ConfigHubScreen extends StatelessWidget {
                 onTap: () => _push(context, const BackupScreen()),
               ),
               AppNavTile(
-                title: 'Bloqueo PIN',
-                subtitle: 'Proteger el acceso a la app',
+                title: 'Bloqueo',
+                subtitle: 'Huella o PIN para abrir la app',
                 icon: Icons.lock_outline,
                 color: Colors.blueGrey.shade700,
                 onTap: () => _push(context, const LockSettingsScreen()),

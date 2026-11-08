@@ -122,10 +122,13 @@ def capture_auth() -> None:
         shot("05_saludamg_condiciones.png")
         back()
 
-    if tap_label("digo") or tap_label("recuperación") or tap_label("recuperacion"):
+    # Recuperar contraseña: enlace por email (desde la pantalla de acceso).
+    tap_label("Ya tengo cuenta") or back()
+    time.sleep(0.4)
+    if tap_label("Olvidé"):
         time.sleep(0.4)
         shot("06_saludamg_recuperar.png")
-        tap_label("Entrar")
+        tap_label("Ya tengo cuenta") or back()
 
 
 def _open_from_home(label: str) -> bool:
@@ -171,6 +174,11 @@ def capture_app_screens() -> None:
     if _open_from_home("Medicaciones"):
         time.sleep(0.6)
         shot("10_saludamg_medicaciones.png")
+        # «Tomado» pregunta la hora real (se cancela: no guarda nada).
+        if tap_label("Tomado", partial=False):
+            time.sleep(0.6)
+            shot("29_saludamg_tomado_hora.png")
+            tap_label("Cancelar", partial=False)
         back()
 
     if _open_from_home("Configuración"):
@@ -182,9 +190,9 @@ def capture_app_screens() -> None:
         ("Ficha", "07_saludamg_ficha.png"),
         ("Recordatorios", "09_saludamg_recordatorios.png"),
         ("Datos a medir", "12_saludamg_datos_medir.png"),
-        ("Medicación (config)", "11_saludamg_med_config.png"),
+        ("Opciones de medicación", "11_saludamg_med_config.png"),
         ("Copia de seguridad", "13_saludamg_backup.png"),
-        ("Bloqueo PIN", "14_saludamg_bloqueo.png"),
+        ("Bloqueo", "14_saludamg_bloqueo.png"),
         ("Acerca de", "16_saludamg_acerca.png"),
     ]
     for label, file in config_shots:

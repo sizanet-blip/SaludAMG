@@ -66,7 +66,7 @@ class _MedicationPreferencesScreenState
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: const SaludAmgAppBar(section: 'Medicación (config)'),
+      appBar: const SaludAmgAppBar(section: 'Opciones de medicación'),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
         children: [

@@ -356,6 +356,7 @@ class MedicationDoseLogAdapter extends TypeAdapter<MedicationDoseLog> {
       scheduledAt: _asDate(fields[2]) ?? DateTime.now(),
       status: _enumAt(DoseStatus.values, fields[3], DoseStatus.taken),
       recordedAt: _asDate(fields[4]) ?? DateTime.now(),
+      takenAt: _asDate(fields[5]),
     );
   }
 
@@ -367,6 +368,7 @@ class MedicationDoseLogAdapter extends TypeAdapter<MedicationDoseLog> {
       2: obj.scheduledAt,
       3: obj.status.index,
       4: obj.recordedAt,
+      5: obj.takenAt,
     });
   }
 }

@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import '../../app_scope.dart';
 import '../../core/theme/app_theme.dart';
 import '../../domain/entities/app_lock_config.dart';
+import '../../services/app_auth_service.dart';
 import '../../services/app_lock_service.dart';
 import '../widgets/app_section_card.dart';
 import '../widgets/salud_amg_app_bar.dart';
@@ -73,14 +74,18 @@ class _LockSettingsScreenState extends State<LockSettingsScreen> {
         return;
       }
     } else {
-      config = config.copyWith(
-        enabled: false,
-        useBiometrics: false,
-      );
+      config = config.copyWith(enabled: false);
     }
 
     if (config.useBiometrics && !_bioAvailable) {
       config = config.copyWith(useBiometrics: false);
+    }
+    // Sin cuenta AMG no hay contraseña de respaldo: la huella necesita PIN.
+    if (config.useBiometrics &&
+        !config.pinActive &&
+        !AppAuthService.isConfigured) {
+      _message('Sin cuenta AMG, la huella necesita también un PIN.');
+      return;
     }
 
     setState(() => _saving = true);
@@ -94,9 +99,20 @@ class _LockSettingsScreenState extends State<LockSettingsScreen> {
     });
     final messenger = ScaffoldMessenger.of(context);
     Navigator.pop(context, true);
-    messenger.showSnackBar(
-      const SnackBar(content: Text('Bloqueo guardado.')),
-    );
+    messenger.showSnackBar(const SnackBar(content: Text('Bloqueo guardado.')));
+  }
+
+  /// Antes de activar la huella se comprueba que funciona.
+  Future<void> _toggleBiometrics(bool value) async {
+    if (value) {
+      final ok = await AppScope.of(context).appLock.authenticateBiometrics();
+      if (!ok) {
+        if (mounted) _message('No se ha podido comprobar la huella.');
+        return;
+      }
+    }
+    if (!mounted) return;
+    setState(() => _config = _config.copyWith(useBiometrics: value));
   }
 
   void _message(String text) {
@@ -130,27 +146,27 @@ class _LockSettingsScreenState extends State<LockSettingsScreen> {
               children: [
                 SwitchListTile(
                   contentPadding: EdgeInsets.zero,
+                  secondary: const Icon(Icons.fingerprint),
+                  title: const Text('Abrir con huella'),
+                  subtitle: Text(
+                    _bioAvailable
+                        ? (AppAuthService.isConfigured
+                              ? 'Si falla, entras con la contraseña de tu cuenta AMG.'
+                              : 'Necesita también un PIN.')
+                        : 'Registra una huella o tu cara en los ajustes del '
+                              'teléfono para usarla aquí.',
+                  ),
+                  value: _config.useBiometrics && _bioAvailable,
+                  onChanged: _bioAvailable ? _toggleBiometrics : null,
+                ),
+                SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
+                  secondary: const Icon(Icons.pin_outlined),
                   title: const Text('Pedir PIN al abrir'),
                   value: _config.enabled,
                   onChanged: (value) => setState(
                     () => _config = _config.copyWith(enabled: value),
                   ),
-                ),
-                SwitchListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: const Text('Permitir biometría'),
-                  subtitle: Text(
-                    _bioAvailable
-                        ? 'Huella o Face ID además del PIN'
-                        : 'No disponible en este dispositivo',
-                  ),
-                  value: _config.useBiometrics && _bioAvailable,
-                  onChanged: !_config.enabled || !_bioAvailable
-                      ? null
-                      : (value) => setState(
-                            () =>
-                                _config = _config.copyWith(useBiometrics: value),
-                          ),
                 ),
                 if (_config.enabled) ...[
                   const SizedBox(height: 8),

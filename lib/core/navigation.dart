@@ -15,9 +15,15 @@ void resetAppNavigatorKey() {
 /// Payload pendiente si la app aún no ha montado el navigator.
 String? pendingNotificationPayload;
 
+/// `true` solo con sesión iniciada y la app desbloqueada. Mientras no lo esté
+/// (arranque, pantalla de acceso o PIN), el toque en un aviso se guarda y se
+/// abre después; si no, se perdía al cambiar de pantalla o se abría encima
+/// del acceso.
+bool notificationNavigationReady = false;
+
 void openMedicationsFromNotification() {
   final navigator = appNavigatorKey.currentState;
-  if (navigator == null) {
+  if (navigator == null || !notificationNavigationReady) {
     pendingNotificationPayload = 'medications';
     return;
   }
@@ -26,7 +32,7 @@ void openMedicationsFromNotification() {
 
 void openMeasurementFromNotification() {
   final navigator = appNavigatorKey.currentState;
-  if (navigator == null) {
+  if (navigator == null || !notificationNavigationReady) {
     pendingNotificationPayload = 'measurement';
     return;
   }
@@ -34,18 +40,22 @@ void openMeasurementFromNotification() {
 }
 
 void consumePendingNotificationNavigation() {
-  final pending = pendingNotificationPayload;
-  if (pending == null) return;
-  pendingNotificationPayload = null;
+  if (pendingNotificationPayload == null || !notificationNavigationReady) return;
   WidgetsBinding.instance.addPostFrameCallback((_) {
+    final pending = pendingNotificationPayload;
     final navigator = appNavigatorKey.currentState;
-    if (navigator == null) return;
+    if (pending == null || navigator == null || !notificationNavigationReady) {
+      return;
+    }
+    pendingNotificationPayload = null;
     if (pending == 'medications') {
       _pushMedications(navigator);
     } else if (pending == 'measurement') {
       _pushMeasurement(navigator);
     }
   });
+  // Por si se llama fuera de un frame: que el callback llegue a ejecutarse.
+  WidgetsBinding.instance.scheduleFrame();
 }
 
 void _pushMedications(NavigatorState navigator) {

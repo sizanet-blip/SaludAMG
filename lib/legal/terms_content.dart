@@ -1,7 +1,7 @@
 /// Condiciones de uso de SaludAMG (texto en la app).
 abstract final class TermsContent {
-  static const String version = '1.1';
-  static const String versionDate = '2026-10-28';
+  static const String version = '1.2';
+  static const String versionDate = '2026-11-07';
   static const String responsable = 'Alberto Maestre Gutiérrez';
   static const String emailContacto = 'info@albertomaestre.es';
   static const String appName = 'SaludAMG';
@@ -28,7 +28,7 @@ $appName es una herramienta de seguimiento personal de salud y medicación. No e
 Los avisos de medicación o recordatorios son ayudas; tú eres responsable de seguir las indicaciones de tu médico o farmacéutico.
 
 3. Cuenta y acceso
-El acceso puede requerir una cuenta AMG. La solicitud puede quedar pendiente hasta la aprobación del administrador. Eres responsable de custodiar usuario, contraseña y código de recuperación.
+El acceso puede requerir una cuenta AMG. La solicitud puede quedar pendiente hasta la aprobación del administrador. Eres responsable de custodiar tu usuario y contraseña y de indicar un email al que tengas acceso, porque es la vía para recuperar la contraseña.
 
 4. Uso bajo tu responsabilidad
 Utilizas la app bajo tu exclusiva responsabilidad. Debes contrastar cualquier dato (mediciones importadas, gráficas, exportaciones) antes de basar en ellos decisiones sanitarias.

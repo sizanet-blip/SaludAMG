@@ -51,12 +51,12 @@ abstract final class HelpContent {
         ],
       ),
       HelpDocSection(
-        title: '2. Cuenta AMG (si está configurada)',
+        title: '2. Cuenta AMG',
         bullets: [
-          'Al abrir la app puede pedirte usuario y contraseña (cuenta AMG).',
-          'Regístrate, acepta privacidad y condiciones, y espera la aprobación del administrador si la cuenta queda pendiente.',
-          'Guarda el código de recuperación que se muestra al registrarte.',
-          'Sin API configurada en el build, puedes usar la app directamente.',
+          'Entras con tu cuenta AMG: la misma para todas las apps AMG.',
+          'Primera vez: Crear cuenta con usuario, contraseña (mínimo 6) y email repetido; acepta privacidad y condiciones.',
+          'Si ya tienes cuenta de otra app AMG, entra con ella y envía la solicitud al panel.',
+          'El administrador aprueba el acceso. Si olvidas la contraseña, te enviamos un enlace a tu email.',
         ],
       ),
       HelpDocSection(
@@ -98,25 +98,27 @@ abstract final class HelpContent {
         title: '1. Introducción',
         paragraphs: [
           '$appName guarda tus datos en el dispositivo. El panel AMG solo recibe datos de cuenta/instalación si el build está configurado (usuario, versión, device); no se envían mediciones ni medicación al registrarte.',
-          'La app está pensada para adultos. Úsala bajo tu responsabilidad y contrastá datos antes de decisiones sanitarias.',
+          'La app está pensada para adultos. Úsala bajo tu responsabilidad y contrasta los datos antes de decisiones sanitarias.',
         ],
       ),
       HelpDocSection(
         title: '2. Cuenta AMG y acceso',
         paragraphs: [
-          'Si el build incluye la URL de autenticación, al abrir verás login/registro.',
+          'Para usar $appName necesitas una cuenta AMG. Es la misma para SaludAMG, TiroAMG, MotoAMG y Simulador 112: si ya tienes una, no crees otra.',
         ],
         bullets: [
-          'Registro: usuario, contraseña, email opcional; aceptar privacidad y condiciones.',
-          'Pendiente: un administrador debe activar la cuenta en el panel antes de entrar.',
-          'Código de recuperación: guárdalo; sirve para restablecer la contraseña.',
-          'Instalación: en Acerca de (Configuración) puedes asociar un email de contacto (opcional) y ver el ID de dispositivo.',
+          'Primera vez: Crear cuenta con usuario, contraseña (mínimo 6 caracteres) y tu email dos veces. El email es obligatorio: sirve para recuperar la contraseña.',
+          'Acepta la política de privacidad y las condiciones y pulsa «Crear y solicitar acceso».',
+          'Cuenta de otra app AMG: entra con tu usuario y contraseña, acepta las condiciones y pulsa «Enviar solicitud al panel».',
+          'El administrador aprueba cada solicitud. Mientras tanto verás «Pendiente de aprobación».',
+          'Contraseña olvidada: pulsa «Olvidé mi contraseña» y abre el enlace que te llegará al email.',
+          'En Acerca de (Configuración) ves la versión y el ID de dispositivo.',
         ],
       ),
       HelpDocSection(
         title: '3. Pantalla de inicio',
         paragraphs: [
-          'La pantalla principal muestra el wordmark y los botones de acción Medicación y Medición (el de medicación se puede ocultar en preferencias).',
+          'La pantalla principal muestra el logotipo de SaludAMG y los botones de acción Medicación y Medición (el de medicación se puede ocultar en preferencias).',
           'Debajo tienes el menú principal: Resumen, Historial, Medicaciones, Configuración y Ayuda. Cerrar sesión aparece si hay cuenta AMG.',
         ],
       ),
@@ -133,8 +135,8 @@ abstract final class HelpContent {
           'Resumen — última toma, evolución e informes.',
           'Historial — listado; filtros con el icono tune de la cabecera.',
           'Medicaciones — tratamientos, tomas del día y preferencias (tune).',
-          'Configuración → Ficha, Recordatorios, Datos a medir, Medicación (config).',
-          'Configuración → Copia de seguridad, Bloqueo PIN, Cuenta AMG, Acerca de.',
+          'Configuración → Ficha, Recordatorios, Datos a medir, Opciones de medicación.',
+          'Configuración → Copia de seguridad, Bloqueo, Cuenta AMG, Acerca de.',
           'Ayuda — guía, manual, FAQ y textos legales.',
         ],
       ),
@@ -149,7 +151,7 @@ abstract final class HelpContent {
         title: '7. Medicación y recordatorios',
         paragraphs: [
           'Alta de medicamentos con pautas, horarios y, si lo activas, control de tomas y stock.',
-          'En Medicación (config) defines botón en inicio, seguimiento de dosis y avisos de pedida al médico.',
+          'En Opciones de medicación defines botón en inicio, seguimiento de dosis y avisos de pedida al médico.',
           'Recordatorios (en Configuración) y notificaciones locales del sistema.',
         ],
       ),
@@ -163,15 +165,16 @@ abstract final class HelpContent {
       HelpDocSection(
         title: '9. Exportación y copia de seguridad',
         bullets: [
-          'Resumen → Exportar Excel / PDF: informes para compartir o archivar (no sustituyen la historia clínica).',
+          'Resumen o Historial → Exportar Excel / PDF: informes para compartir o archivar (no sustituyen la historia clínica).',
           'Configuración → Copia de seguridad: archivo cifrado; al importar sustituye los datos actuales — exporta antes si quieres conservar lo de ahora.',
         ],
       ),
       HelpDocSection(
-        title: '10. Bloqueo PIN',
+        title: '10. Bloqueo con huella o PIN',
         paragraphs: [
-          'En Configuración puedes proteger el acceso con PIN y, si el dispositivo lo permite, biometría.',
-          'Si olvidas el PIN y no hay otra vía de desbloqueo, puede ser necesario borrar datos de la app (perderás lo local si no tienes copia).',
+          'Al iniciar sesión, si el teléfono tiene huella o cara registrada, $appName te ofrece usarla para abrir la app. También se activa en Configuración → Bloqueo, con huella, con PIN o con las dos.',
+          'Si la huella falla, pulsa «Entrar con la contraseña de la cuenta». Si olvidas el PIN, pulsa «¿Olvidaste el PIN?» y escribe la contraseña de tu cuenta AMG: se quita el PIN y puedes poner otro. Ambas opciones necesitan internet.',
+          'Tras 5 PIN incorrectos hay que esperar unos segundos antes de volver a probar.',
         ],
       ),
       HelpDocSection(
@@ -195,22 +198,22 @@ abstract final class HelpContent {
     HelpFaqItem(
       question: '¿SaludAMG sustituye al médico?',
       answer:
-          'No. Es una herramienta de seguimiento personal. Contrastá siempre con un profesional sanitario.',
+          'No. Es una herramienta de seguimiento personal. Contrasta siempre con un profesional sanitario.',
     ),
     HelpFaqItem(
       question: '¿Por qué me pide cuenta al abrir?',
       answer:
-          'Si el build tiene autenticación AMG configurada, el acceso requiere usuario/contraseña aprobados. Sin esa configuración, la app abre directamente.',
+          'Tus datos se guardan en el móvil, pero el acceso necesita tu cuenta AMG aprobada por el administrador. Es la misma cuenta para todas las apps AMG.',
     ),
     HelpFaqItem(
       question: 'Me he registrado y no puedo entrar',
       answer:
-          'La cuenta puede estar pendiente de aprobación. Cuando el administrador la active en el panel, inicia sesión con tu usuario y contraseña.',
+          'El administrador tiene que aprobar tu acceso a $appName. Cuando lo active, inicia sesión con tu usuario y contraseña.',
     ),
     HelpFaqItem(
       question: 'Olvidé la contraseña',
       answer:
-          'Usa la recuperación con el código que se mostró al registrarte (y usuario). Si pusiste email, también puede usarse según el flujo disponible.',
+          'Pulsa «Olvidé mi contraseña» en la pantalla de acceso y escribe tu email: recibirás un enlace para crear una nueva.',
     ),
     HelpFaqItem(
       question: '¿Se envían mis mediciones al servidor?',

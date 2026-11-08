@@ -1,38 +1,22 @@
 import 'dart:math' as math;
 
 import 'package:fl_chart/fl_chart.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../app_scope.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/format.dart';
 import '../../domain/entities/blood_pressure_model.dart';
-import '../../domain/entities/export_options.dart';
-import '../../domain/entities/import_preferences.dart';
 import '../../domain/entities/medication.dart';
-import '../../domain/entities/medication_dose_log.dart';
 import '../../domain/entities/medication_preferences.dart';
 import '../../domain/entities/user_profile.dart';
 import '../../domain/medication_adherence.dart';
-import '../../services/app_auth_service.dart';
-import '../../services/app_update_service.dart';
-import '../../services/debug_seed_service.dart';
-import '../widgets/app_update_dialogs.dart';
+import '../widgets/export_report_flow.dart';
 import '../widgets/reference_badge.dart';
 import '../widgets/salud_amg_app_bar.dart';
-import 'about_app_screen.dart';
-import 'backup_screen.dart';
-import 'cuenta_amg_screen.dart';
-import 'help/ayuda_screen.dart';
 import 'history_screen.dart';
-import 'import_settings_screen.dart';
-import 'lock_settings_screen.dart';
 import 'measurement_form_screen.dart';
-import 'medication_preferences_screen.dart';
 import 'medications_screen.dart';
-import 'profile_form_screen.dart';
-import 'reminders_screen.dart';
 
 enum _ChartMetric { pressure, pulse, weight, glucose, steps, oxygen }
 
@@ -52,58 +36,17 @@ class _ResumenScreenState extends State<ResumenScreen> {
   MedicationPreferences _medPrefs = MedicationPreferences.defaults();
   _ChartMetric _metric = _ChartMetric.pressure;
   _ChartPeriod _period = _ChartPeriod.days30;
-  var _updateDialogShown = false;
-  final _updateService = const AppUpdateService();
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _reload();
-      _checkUpdatesOnStart();
     });
   }
 
-  Future<void> _checkUpdatesOnStart() async {
-    if (_updateDialogShown || !mounted) return;
-    if (!AppUpdateService.usesServerUpdates) return;
-    await Future<void>.delayed(const Duration(milliseconds: 1200));
-    if (!mounted || _updateDialogShown) return;
-    final result = await _updateService.checkForUpdates();
-    if (!mounted || _updateDialogShown) return;
-    if (result.hasUpdate && result.info != null) {
-      _updateDialogShown = true;
-      await showAppUpdateDialog(
-        context,
-        service: _updateService,
-        info: result.info!,
-        force: result.forceUpdate,
-        currentVersion: result.currentVersion,
-        currentBuild: result.currentBuild,
-      );
-    }
-  }
 
-  Future<void> _openAbout() async {
-    await Navigator.push<void>(
-      context,
-      MaterialPageRoute(builder: (_) => const AboutAppScreen()),
-    );
-  }
 
-  Future<void> _openAyuda() async {
-    await Navigator.push<void>(
-      context,
-      MaterialPageRoute(builder: (_) => const AyudaScreen()),
-    );
-  }
-
-  Future<void> _openCuentaAmg() async {
-    await Navigator.push<void>(
-      context,
-      MaterialPageRoute(builder: (_) => const CuentaAmgScreen()),
-    );
-  }
 
   void _reload() {
     if (!mounted) return;
@@ -124,27 +67,8 @@ class _ResumenScreenState extends State<ResumenScreen> {
     if (saved == true) _reload();
   }
 
-  Future<void> _openProfile() async {
-    final saved = await Navigator.push<bool>(
-      context,
-      MaterialPageRoute(builder: (_) => const ProfileFormScreen()),
-    );
-    if (saved == true) _reload();
-  }
 
-  Future<void> _openReminders() async {
-    await Navigator.push<void>(
-      context,
-      MaterialPageRoute(builder: (_) => const RemindersScreen()),
-    );
-  }
 
-  Future<void> _openImportSettings() async {
-    await Navigator.push<void>(
-      context,
-      MaterialPageRoute(builder: (_) => const ImportSettingsScreen()),
-    );
-  }
 
   Future<void> _openHistory() async {
     await Navigator.push<void>(
@@ -211,404 +135,14 @@ class _ResumenScreenState extends State<ResumenScreen> {
     );
   }
 
-  Future<void> _openMedicationPrefs() async {
-    await Navigator.push<void>(
-      context,
-      MaterialPageRoute(builder: (_) => const MedicationPreferencesScreen()),
-    );
-    if (mounted) _reload();
-  }
 
-  Future<void> _openBackup() async {
-    final changed = await Navigator.push<bool>(
-      context,
-      MaterialPageRoute(builder: (_) => const BackupScreen()),
-    );
-    if (changed == true && mounted) _reload();
-  }
 
-  Future<void> _openLockSettings() async {
-    await Navigator.push<void>(
-      context,
-      MaterialPageRoute(builder: (_) => const LockSettingsScreen()),
-    );
-  }
 
-  Future<void> _seedDebugData() async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Datos de prueba'),
-        content: const Text(
-          'Se generarán mediciones aleatorias de unos 21 días '
-          '(tensión, pulso, peso y extras) para ver gráficas e historial. '
-          'No borra las que ya tengas. Luego puedes borrarlas con '
-          '«Borrar datos de prueba».',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancelar'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Generar'),
-          ),
-        ],
-      ),
-    );
-    if (confirmed != true || !mounted) return;
-    final count = await DebugSeedService(
-      AppScope.of(context).measurements,
-    ).seedRandomDays();
-    if (!mounted) return;
-    _reload();
-    _message('Añadidas $count mediciones de prueba.');
-  }
 
-  Future<void> _clearDebugData() async {
-    final seed = DebugSeedService(AppScope.of(context).measurements);
-    final pending = seed.countSeeded();
-    if (pending == 0) {
-      _message('No hay mediciones de prueba que borrar.');
-      return;
-    }
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Borrar datos de prueba'),
-        content: Text(
-          'Se eliminarán $pending mediciones marcadas como de prueba. '
-          'Las mediciones reales no se tocan.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancelar'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Borrar'),
-          ),
-        ],
-      ),
-    );
-    if (confirmed != true || !mounted) return;
-    final removed = await seed.clearSeeded();
-    if (!mounted) return;
-    _reload();
-    _message('Eliminadas $removed mediciones de prueba.');
-  }
 
-  Future<void> _export({required bool pdf}) async {
-    final profile = _profile;
-    if (profile == null) return;
-    final request = await _pickExportRequest();
-    if (request == null || !mounted) return;
-    final range = request.range;
-    final options = request.options;
-    if (!options.hasContent) {
-      _message('Elige al menos un bloque del informe.');
-      return;
-    }
+  Future<void> _export({required bool pdf}) =>
+      startReportExport(context, pdf: pdf);
 
-    final filtered = options.includeReadings
-        ? _readings.where((reading) {
-            return !reading.measuredAt.isBefore(range.start) &&
-                !reading.measuredAt.isAfter(range.end);
-          }).toList()
-        : <BloodPressureModel>[];
-    final deps = AppScope.of(context);
-    final doseLogs = options.includeDoseLogs
-        ? deps.medicationDoseLogs.getAll().where((log) {
-            return !log.scheduledAt.isBefore(range.start) &&
-                !log.scheduledAt.isAfter(range.end);
-          }).toList()
-        : <MedicationDoseLog>[];
-    // Nombres de medicación siempre disponibles para el bloque de tomas.
-    final medicationsInRange = deps.medications.getAll().where((med) {
-      final start = DateTime(
-        med.startDate.year,
-        med.startDate.month,
-        med.startDate.day,
-      );
-      final end = med.endDate == null
-          ? null
-          : DateTime(
-              med.endDate!.year,
-              med.endDate!.month,
-              med.endDate!.day,
-              23,
-              59,
-              59,
-            );
-      if (end != null && end.isBefore(range.start)) return false;
-      if (start.isAfter(range.end)) return false;
-      return true;
-    }).toList();
-    final medications = options.includeMedications || options.includeDoseLogs
-        ? medicationsInRange
-        : <Medication>[];
-    final exports = deps.exports;
-    try {
-      if (pdf) {
-        await exports.sharePdf(
-          profile: profile,
-          readings: filtered,
-          medications: medications,
-          doseLogs: doseLogs,
-          options: options,
-        );
-      } else {
-        await exports.shareExcel(
-          profile: profile,
-          readings: filtered,
-          medications: medications,
-          doseLogs: doseLogs,
-          options: options,
-        );
-      }
-    } catch (error) {
-      if (!mounted) return;
-      _message('No se ha podido crear el informe. $error');
-    }
-  }
-
-  Future<({DateTimeRange range, ExportOptions options})?> _pickExportRequest() async {
-    final now = DateTime.now();
-    var from = _readings.isEmpty
-        ? now.subtract(const Duration(days: 90))
-        : _readings.last.measuredAt;
-    var to = now;
-    final importPrefs = AppScope.of(context).importPreferences.current();
-    var options = ExportOptions.fromImportPreferences(importPrefs);
-
-    return showDialog<({DateTimeRange range, ExportOptions options})>(
-      context: context,
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setLocal) {
-            return AlertDialog(
-              title: const Text('Exportar informe'),
-              content: SizedBox(
-                width: 420,
-                child: SingleChildScrollView(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      const Text(
-                        'Periodo',
-                        style: TextStyle(fontWeight: FontWeight.w700),
-                      ),
-                      ListTile(
-                        contentPadding: EdgeInsets.zero,
-                        title: const Text('Desde'),
-                        subtitle: Text(formatDate(from)),
-                        onTap: () async {
-                          final picked = await showDatePicker(
-                            context: context,
-                            initialDate: from,
-                            firstDate: DateTime(2000),
-                            lastDate: now,
-                          );
-                          if (picked != null) {
-                            setLocal(
-                              () => from = DateTime(
-                                picked.year,
-                                picked.month,
-                                picked.day,
-                              ),
-                            );
-                          }
-                        },
-                      ),
-                      ListTile(
-                        contentPadding: EdgeInsets.zero,
-                        title: const Text('Hasta'),
-                        subtitle: Text(formatDate(to)),
-                        onTap: () async {
-                          final picked = await showDatePicker(
-                            context: context,
-                            initialDate: to,
-                            firstDate: DateTime(2000),
-                            lastDate: now,
-                          );
-                          if (picked != null) setLocal(() => to = picked);
-                        },
-                      ),
-                      const Divider(),
-                      const Text(
-                        'Bloques',
-                        style: TextStyle(fontWeight: FontWeight.w700),
-                      ),
-                      CheckboxListTile(
-                        contentPadding: EdgeInsets.zero,
-                        title: const Text('Ficha'),
-                        value: options.includeProfile,
-                        onChanged: (value) => setLocal(
-                          () => options = options.copyWith(
-                            includeProfile: value ?? false,
-                          ),
-                        ),
-                      ),
-                      CheckboxListTile(
-                        contentPadding: EdgeInsets.zero,
-                        title: const Text('Mediciones'),
-                        value: options.includeReadings,
-                        onChanged: (value) => setLocal(
-                          () => options = options.copyWith(
-                            includeReadings: value ?? false,
-                          ),
-                        ),
-                      ),
-                      CheckboxListTile(
-                        contentPadding: EdgeInsets.zero,
-                        title: const Text('Medicaciones'),
-                        value: options.includeMedications,
-                        onChanged: (value) => setLocal(
-                          () => options = options.copyWith(
-                            includeMedications: value ?? false,
-                          ),
-                        ),
-                      ),
-                      CheckboxListTile(
-                        contentPadding: EdgeInsets.zero,
-                        title: const Text('Tomas de medicación'),
-                        value: options.includeDoseLogs,
-                        onChanged: (value) => setLocal(
-                          () => options = options.copyWith(
-                            includeDoseLogs: value ?? false,
-                          ),
-                        ),
-                      ),
-                      if (options.includeReadings) ...[
-                        const Divider(),
-                        const Text(
-                          'Columnas de mediciones',
-                          style: TextStyle(fontWeight: FontWeight.w700),
-                        ),
-                        const SizedBox(height: 4),
-                        const Text(
-                          'Por defecto, las de «Datos a medir».',
-                          style: TextStyle(
-                            color: AppColors.subtitle,
-                            fontSize: 13,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
-                          children: [
-                            for (final metric in ImportMetric.values)
-                              FilterChip(
-                                label: Text(metric.label),
-                                selected: options.hasMetric(metric),
-                                onSelected: (selected) {
-                                  setLocal(() {
-                                    final next = {...options.metrics};
-                                    if (selected) {
-                                      next.add(metric);
-                                    } else {
-                                      next.remove(metric);
-                                    }
-                                    options = options.copyWith(metrics: next);
-                                  });
-                                },
-                              ),
-                          ],
-                        ),
-                        CheckboxListTile(
-                          contentPadding: EdgeInsets.zero,
-                          title: const Text('Contexto'),
-                          subtitle: const Text(
-                            'Momento, cómo me siento, notas, origen y fuente',
-                          ),
-                          value: options.includeContext,
-                          onChanged: (value) => setLocal(
-                            () => options = options.copyWith(
-                              includeContext: value ?? false,
-                            ),
-                          ),
-                        ),
-                        Align(
-                          alignment: Alignment.centerLeft,
-                          child: TextButton(
-                            onPressed: () => setLocal(() {
-                              options = options.copyWith(
-                                metrics: ImportMetric.values.toSet(),
-                                includeContext: true,
-                              );
-                            }),
-                            child: const Text('Seleccionar todas las columnas'),
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text('Cancelar'),
-                ),
-                FilledButton(
-                  onPressed: () {
-                    final start = DateTime(from.year, from.month, from.day);
-                    final end = DateTime(to.year, to.month, to.day, 23, 59, 59);
-                    if (end.isBefore(start)) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text(
-                            'La fecha «Hasta» tiene que ser posterior a «Desde».',
-                          ),
-                        ),
-                      );
-                      return;
-                    }
-                    if (!options.hasContent) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Elige al menos un bloque.'),
-                        ),
-                      );
-                      return;
-                    }
-                    if (options.includeReadings &&
-                        options.metrics.isEmpty &&
-                        !options.includeContext) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text(
-                            'En mediciones elige alguna columna o el contexto.',
-                          ),
-                        ),
-                      );
-                      return;
-                    }
-                    Navigator.pop(
-                      context,
-                      (
-                        range: DateTimeRange(start: start, end: end),
-                        options: options,
-                      ),
-                    );
-                  },
-                  child: const Text('Crear'),
-                ),
-              ],
-            );
-          },
-        );
-      },
-    );
-  }
-
-  void _message(String text) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
-  }
 
   @override
   Widget build(BuildContext context) {
