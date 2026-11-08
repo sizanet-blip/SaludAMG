@@ -22,6 +22,12 @@ class AppLockConfig {
 
   bool get hasPin => pinHash.isNotEmpty;
 
+  /// PIN activo (con PIN guardado).
+  bool get pinActive => enabled && hasPin;
+
+  /// ¿Hay que pedir algo al abrir? PIN, huella o ambos.
+  bool get isActive => pinActive || useBiometrics;
+
   AppLockConfig copyWith({
     bool? enabled,
     String? pinHash,

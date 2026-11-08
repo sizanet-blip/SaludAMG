@@ -15,10 +15,10 @@ class SaludAmgApp extends StatefulWidget {
   final AppDependencies dependencies;
 
   /// Cierra la sesión de UI y vuelve a la pantalla de acceso.
-  static void signOut([BuildContext? context]) {
+  static void signOut([BuildContext? context, String? message]) {
     final fromContext =
         context?.findAncestorStateOfType<_SaludAmgAppState>();
-    (fromContext ?? _SaludAmgAppState.instance)?.signOut();
+    (fromContext ?? _SaludAmgAppState.instance)?.signOut(message);
   }
 
   @override
@@ -33,9 +33,12 @@ class _SaludAmgAppState extends State<SaludAmgApp> with WidgetsBindingObserver {
   var _authReady = !AppAuthService.isConfigured;
   var _checkingAuth = AppAuthService.isConfigured;
 
+  /// Motivo del último cierre de sesión forzado (se muestra en el acceso).
+  String? _signOutMessage;
+
   bool get _lockEnabled {
     final lock = widget.dependencies.appLock.current();
-    return lock.enabled && lock.hasPin;
+    return lock.isActive;
   }
 
   String get _appKey => _checkingAuth
@@ -48,14 +51,13 @@ class _SaludAmgAppState extends State<SaludAmgApp> with WidgetsBindingObserver {
     instance = this;
     WidgetsBinding.instance.addObserver(this);
     _unlocked = !_lockEnabled;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      consumePendingNotificationNavigation();
-      _checkAuthSession();
-    });
+    // El aviso pendiente se abre en build(), cuando ya hay sesión y desbloqueo.
+    WidgetsBinding.instance.addPostFrameCallback((_) => _checkAuthSession());
   }
 
-  void signOut() {
+  void signOut([String? message]) {
     if (!mounted) return;
+    _signOutMessage = message;
     // ValueKey del MaterialApp + navigator nuevo (evita pila/GlobalKey viejos).
     resetAppNavigatorKey();
     pendingNotificationPayload = null;
@@ -90,6 +92,7 @@ class _SaludAmgAppState extends State<SaludAmgApp> with WidgetsBindingObserver {
           .hasSession()
           .timeout(const Duration(seconds: 3), onTimeout: () => false);
       _finishAuthCheck(ready: ok);
+      if (ok) _checkAccountInBackground();
     } catch (e, st) {
       debugPrint('Auth check falló: $e\n$st');
       _finishAuthCheck(ready: false);
@@ -111,6 +114,7 @@ class _SaludAmgAppState extends State<SaludAmgApp> with WidgetsBindingObserver {
     }
     if (state == AppLifecycleState.resumed) {
       _resyncNotifications();
+      _checkAccountInBackground();
       if (_lockEnabled && _wasInBackground) {
         _wasInBackground = false;
         if (_unlocked) {
@@ -118,6 +122,18 @@ class _SaludAmgAppState extends State<SaludAmgApp> with WidgetsBindingObserver {
         }
       }
     }
+  }
+
+  /// Sin internet no pasa nada: se sigue usando la app con los datos locales.
+  /// Solo si el panel dice que la cuenta ya no vale, se cierra la sesión.
+  Future<void> _checkAccountInBackground() async {
+    if (!_authReady || !AppAuthService.isConfigured) return;
+    final auth = AppAuthService();
+    final message = await auth.accountRevokedMessage();
+    if (message == null || !mounted || !_authReady) return;
+    await auth.logout();
+    signOut('$message Se ha cerrado la sesión. Tus datos siguen en este '
+        'teléfono y volverás a verlos al entrar cuando se resuelva.');
   }
 
   Future<void> _resyncNotifications() async {
@@ -135,6 +151,10 @@ class _SaludAmgAppState extends State<SaludAmgApp> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
+    notificationNavigationReady =
+        !_checkingAuth && _authReady && (!_lockEnabled || _unlocked);
+    // Aviso tocado con la app cerrada, en el acceso o bloqueada: abrir ahora.
+    consumePendingNotificationNavigation();
     return AppScope(
       dependencies: widget.dependencies,
       child: MaterialApp(
@@ -165,7 +185,6 @@ class _SaludAmgAppState extends State<SaludAmgApp> with WidgetsBindingObserver {
                         _unlocked = true;
                         _wasInBackground = false;
                       });
-                      consumePendingNotificationNavigation();
                     },
                   ),
                 ),
@@ -179,7 +198,10 @@ class _SaludAmgAppState extends State<SaludAmgApp> with WidgetsBindingObserver {
             : (_authReady
                 ? const HomeScreen()
                 : AuthGateScreen(
+                    initialMessage: _signOutMessage,
                     onAuthenticated: () {
+                      _signOutMessage = null;
+                      HomeScreen.offerBiometricsAfterLogin = true;
                       resetAppNavigatorKey();
                       setState(() {
                         _authReady = true;

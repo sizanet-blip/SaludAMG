@@ -29,7 +29,9 @@ class AppLockService {
 
   Future<bool> canCheckBiometrics() async {
     try {
-      return await _auth.canCheckBiometrics || await _auth.isDeviceSupported();
+      // Hace falta una huella/cara registrada, no solo que el móvil la admita.
+      if (!await _auth.isDeviceSupported()) return false;
+      return (await _auth.getAvailableBiometrics()).isNotEmpty;
     } on PlatformException {
       return false;
     }

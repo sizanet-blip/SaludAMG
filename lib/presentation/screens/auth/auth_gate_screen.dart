@@ -10,9 +10,16 @@ import '../legal_document_screen.dart';
 /// Login / registro / recuperación / pendiente de aprobación.
 /// Boceto 1: AppBar de marca + SegmentedButton (estilo familia AMG / Tiro).
 class AuthGateScreen extends StatefulWidget {
-  const AuthGateScreen({super.key, required this.onAuthenticated});
+  const AuthGateScreen({
+    super.key,
+    required this.onAuthenticated,
+    this.initialMessage,
+  });
 
   final VoidCallback onAuthenticated;
+
+  /// Aviso al llegar (p. ej. el panel ha bloqueado la cuenta).
+  final String? initialMessage;
 
   @override
   State<AuthGateScreen> createState() => _AuthGateScreenState();
@@ -42,6 +49,7 @@ class _AuthGateScreenState extends State<AuthGateScreen> {
   @override
   void initState() {
     super.initState();
+    _message = widget.initialMessage;
     _bootstrap();
   }
 

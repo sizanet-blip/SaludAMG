@@ -84,7 +84,7 @@ class SaludAmgWordmark extends StatelessWidget {
       alignment: Alignment.centerLeft,
       filterQuality: FilterQuality.high,
       gaplessPlayback: true,
-      errorBuilder: (_, __, ___) => Text(
+      errorBuilder: (_, _, _) => Text(
         'SaludAMG',
         textAlign: TextAlign.center,
         style: TextStyle(

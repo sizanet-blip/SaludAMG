@@ -95,7 +95,8 @@ class _BackupScreenState extends State<BackupScreen> {
       }
     } catch (error) {
       if (!mounted) return;
-      _message('No se ha podido restaurar. $error');
+      final detail = error is StateError ? error.message : '$error';
+      _message('No se ha podido restaurar. $detail');
     } finally {
       if (mounted) setState(() => _busy = false);
     }

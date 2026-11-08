@@ -136,7 +136,7 @@ abstract final class HelpContent {
           'Historial — listado; filtros con el icono tune de la cabecera.',
           'Medicaciones — tratamientos, tomas del día y preferencias (tune).',
           'Configuración → Ficha, Recordatorios, Datos a medir, Medicación (config).',
-          'Configuración → Copia de seguridad, Bloqueo PIN, Cuenta AMG, Acerca de.',
+          'Configuración → Copia de seguridad, Bloqueo, Cuenta AMG, Acerca de.',
           'Ayuda — guía, manual, FAQ y textos legales.',
         ],
       ),
@@ -170,10 +170,11 @@ abstract final class HelpContent {
         ],
       ),
       HelpDocSection(
-        title: '10. Bloqueo PIN',
+        title: '10. Bloqueo con huella o PIN',
         paragraphs: [
-          'En Configuración puedes proteger el acceso con PIN y, si el dispositivo lo permite, biometría.',
-          'Si olvidas el PIN y no hay otra vía de desbloqueo, puede ser necesario borrar datos de la app (perderás lo local si no tienes copia).',
+          'Al iniciar sesión, si el teléfono tiene huella o cara registrada, $appName te ofrece usarla para abrir la app. También se activa en Configuración → Bloqueo, con huella, con PIN o con las dos.',
+          'Si la huella falla, pulsa «Entrar con la contraseña de la cuenta». Si olvidas el PIN, pulsa «¿Olvidaste el PIN?» y escribe la contraseña de tu cuenta AMG: se quita el PIN y puedes poner otro. Ambas opciones necesitan internet.',
+          'Tras 5 PIN incorrectos hay que esperar unos segundos antes de volver a probar.',
         ],
       ),
       HelpDocSection(

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
@@ -39,6 +40,10 @@ class AppAuthService {
   static const _kActivated = 'app_auth_activated';
   static const _kPrivacyAcceptedVer = 'app_auth_privacy_accepted_version';
   static const _kTermsAcceptedVer = 'app_auth_terms_accepted_version';
+  static const _kLastCheck = 'app_auth_last_account_check';
+
+  /// Cada cuánto se pregunta al panel si la cuenta sigue activa.
+  static const accountCheckInterval = Duration(hours: 12);
 
   static String get apiBaseUrl {
     for (final c in [_apiAuth, _apiInstall, _apiLicense]) {
@@ -150,11 +155,11 @@ class AppAuthService {
         ok: false,
         alreadyHasAccess: code == 'already_has_access',
         message: data['message']?.toString() ??
-            'Error ${response.statusCode}',
+            _serverError(response.statusCode),
         code: code,
       );
     } catch (e) {
-      return AppAuthResult(ok: false, message: e.toString());
+      return AppAuthResult(ok: false, message: friendlyError(e));
     }
   }
 
@@ -307,73 +312,10 @@ class AppAuthService {
         );
       }
 
-      // 428 solo debería ocurrir con *_current_version (app antigua).
+      // 428: falta aceptar privacidad/condiciones. Si ya se enviaron, no tiene
+      // sentido repetir la misma petición: se muestra el mensaje del panel.
       if (response.statusCode == 428) {
         await _syncLocalLegalAcceptance();
-        if (sendAcceptance) {
-          // Reintento sin campos legales conflictivos: solo accepted.
-          final retry = await _post('/app-auth/login', {
-            'username': username.trim(),
-            'password': password,
-            'app_id': appId,
-            'device_id': id,
-            'platform': _platformKey,
-            'app_version': package.version,
-            'build_number': package.buildNumber,
-            'privacy_accepted_version': privacyPolicyVersion,
-            'terms_accepted_version': termsVersion,
-          });
-          final retryData = _decode(retry.body);
-          debugPrint(
-            '[AppAuth] login retry tras 428 ← HTTP ${retry.statusCode} '
-            'msg=${retryData['message']}',
-          );
-          if (retry.statusCode >= 200 &&
-              retry.statusCode < 300 &&
-              retryData['token'] != null) {
-            final token = retryData['token'].toString();
-            final p = await _prefs;
-            await p.setString(_kToken, token);
-            await p.setBool(_kActivated, true);
-            await p.setString(_kUsername, username.trim());
-            final st = retryData['account'] is Map
-                ? (retryData['account'] as Map)['status']?.toString()
-                : 'active';
-            await p.setString(_kStatus, st ?? 'active');
-            await _acceptLegalOnServer(token);
-            return AppAuthResult(
-              ok: true,
-              message: retryData['message']?.toString() ?? 'Login correcto.',
-            );
-          }
-          final retryCode = retryData['code']?.toString();
-          final retryMsg = retryData['message']?.toString() ?? '';
-          if (retry.statusCode == 403 &&
-              (retryCode == 'no_app_access' ||
-                  _asTruthy(retryData['can_request_access']) ||
-                  _messageLooksLikeNoAppAccess(retryMsg))) {
-            return AppAuthResult(
-              ok: false,
-              needsAppAccess: true,
-              message:
-                  'Tu usuario AMG es correcto. Falta activar SaludAMG: '
-                  'envía la solicitud al panel para que un administrador '
-                  'la active.',
-              code: retryCode ?? 'no_app_access',
-            );
-          }
-          if (retry.statusCode == 403 &&
-              (retryCode == 'pending' ||
-                  retryCode == 'app_access_pending')) {
-            return AppAuthResult(
-              ok: false,
-              pending: true,
-              message: retryData['message']?.toString() ??
-                  'Pendiente de activación en el panel.',
-              code: retryCode,
-            );
-          }
-        }
         return AppAuthResult(
           ok: false,
           needsLegal: !sendAcceptance,
@@ -390,11 +332,11 @@ class AppAuthService {
       return AppAuthResult(
         ok: false,
         message: data['message']?.toString() ??
-            'Error ${response.statusCode}',
+            _serverError(response.statusCode),
         code: code,
       );
     } catch (e) {
-      return AppAuthResult(ok: false, message: e.toString());
+      return AppAuthResult(ok: false, message: friendlyError(e));
     }
   }
 
@@ -449,11 +391,11 @@ class AppAuthService {
         ok: false,
         alreadyHasAccess: code == 'already_has_access',
         message: data['message']?.toString() ??
-            'Error ${response.statusCode}',
+            _serverError(response.statusCode),
         code: code,
       );
     } catch (e) {
-      return AppAuthResult(ok: false, message: e.toString());
+      return AppAuthResult(ok: false, message: friendlyError(e));
     }
   }
 
@@ -473,10 +415,62 @@ class AppAuthService {
       final data = _decode(response.body);
       return AppAuthResult(
         ok: response.statusCode >= 200 && response.statusCode < 300,
-        message: data['message']?.toString() ?? 'Error ${response.statusCode}',
+        message: data['message']?.toString() ?? _serverError(response.statusCode),
       );
     } catch (e) {
-      return AppAuthResult(ok: false, message: e.toString());
+      return AppAuthResult(ok: false, message: friendlyError(e));
+    }
+  }
+
+  /// ¿Sigue la cuenta activa y con SaludAMG en el panel?
+  ///
+  /// No pide contraseña ni bloquea: sin internet, con error del servidor o si
+  /// se miró hace menos de [accountCheckInterval], responde `null` (seguir).
+  /// Solo devuelve un mensaje cuando el panel dice claramente que la cuenta
+  /// está bloqueada, rechazada, pendiente, borrada o sin SaludAMG.
+  Future<String?> accountRevokedMessage({bool force = false}) async {
+    if (!isConfigured || !await hasSession()) return null;
+    final user = (await username())?.trim();
+    if (user == null || user.isEmpty) return null;
+    final p = await _prefs;
+    final last = p.getInt(_kLastCheck);
+    if (!force &&
+        last != null &&
+        DateTime.now().millisecondsSinceEpoch - last <
+            accountCheckInterval.inMilliseconds) {
+      return null;
+    }
+    try {
+      final base = Uri.parse(apiBaseUrl);
+      final uri = base.replace(
+        path: '${base.path.replaceAll(RegExp(r'/+$'), '')}/app-auth/status',
+        queryParameters: {'username': user, 'app_id': appId},
+      );
+      final response =
+          await LicenseApiHttp.get(uri, timeout: const Duration(seconds: 8));
+      final data = _decode(response.body);
+      final status = data['status']?.toString();
+      final hasAccess = data['has_app_access'];
+      final known = response.statusCode == 200 || response.statusCode == 404;
+      if (!known || (response.statusCode == 200 && status == null)) {
+        return null; // Respuesta rara: mejor no echar a nadie.
+      }
+      await p.setInt(_kLastCheck, DateTime.now().millisecondsSinceEpoch);
+      if (status == 'missing' || response.statusCode == 404) {
+        return 'Tu cuenta AMG ya no existe en el panel.';
+      }
+      if (status == 'blocked') return 'Tu cuenta AMG está bloqueada.';
+      if (status == 'rejected') return 'Tu cuenta AMG ha sido rechazada.';
+      if (status == 'pending') {
+        return 'Tu cuenta AMG está pendiente de aprobación.';
+      }
+      if (status == 'active' && hasAccess == false) {
+        return 'El administrador ha quitado SaludAMG de tu cuenta.';
+      }
+      return null;
+    } catch (e) {
+      debugPrint('[AppAuth] comprobación de cuenta sin respuesta: $e');
+      return null;
     }
   }
 
@@ -485,6 +479,7 @@ class AppAuthService {
     final p = await _prefs;
     await p.remove(_kToken);
     await p.remove(_kStatus);
+    await p.remove(_kLastCheck);
   }
 
   Future<void> logout() async {
@@ -549,6 +544,26 @@ class AppAuthService {
     }
     return {};
   }
+
+  /// Errores de red en lenguaje claro (nada de «SocketException…»).
+  static String friendlyError(Object error) {
+    debugPrint('[AppAuth] error: $error');
+    if (error is TimeoutException) {
+      return 'El servidor tarda demasiado en responder. Inténtalo de nuevo '
+          'en un momento.';
+    }
+    if (error is SocketException ||
+        error is HandshakeException ||
+        error is http.ClientException) {
+      return 'No hay conexión con el servidor. Revisa que tengas internet '
+          'e inténtalo de nuevo.';
+    }
+    return 'No se ha podido completar. Inténtalo de nuevo en un momento.';
+  }
+
+  static String _serverError(int statusCode) => statusCode >= 500
+      ? 'El servidor no está disponible ahora mismo. Inténtalo más tarde.'
+      : 'No se ha podido completar (código $statusCode). Inténtalo de nuevo.';
 
   static bool _asTruthy(dynamic value) =>
       value == true || value == 1 || value == '1' || value == 'true';

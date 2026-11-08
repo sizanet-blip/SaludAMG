@@ -6,7 +6,7 @@ import '../../core/theme/app_theme.dart';
 import '../../legal/privacy_content.dart';
 import '../../legal/terms_content.dart';
 import '../../services/app_update_service.dart';
-import '../../services/installation_service.dart';
+import '../../services/app_auth_service.dart';
 import '../widgets/app_section_card.dart';
 import '../widgets/app_update_dialogs.dart';
 import '../widgets/salud_amg_app_bar.dart';
@@ -21,28 +21,17 @@ class AboutAppScreen extends StatefulWidget {
 
 class _AboutAppScreenState extends State<AboutAppScreen> {
   final _updateService = const AppUpdateService();
-  final _installation = InstallationService();
-  final _emailController = TextEditingController();
 
   var _version = '…';
   var _build = '…';
   var _checking = false;
-  var _identifying = false;
   var _deviceId = '…';
-  String? _storedEmail;
-  String? _licenseKey;
 
   @override
   void initState() {
     super.initState();
     _loadVersion();
-    _loadInstallation();
-  }
-
-  @override
-  void dispose() {
-    _emailController.dispose();
-    super.dispose();
+    _loadDeviceId();
   }
 
   Future<void> _loadVersion() async {
@@ -54,17 +43,11 @@ class _AboutAppScreenState extends State<AboutAppScreen> {
     });
   }
 
-  Future<void> _loadInstallation() async {
-    final id = await _installation.deviceId();
-    final email = await _installation.storedEmail();
-    final key = await _installation.storedLicenseKey();
+  /// Mismo identificador que se envía al panel al entrar con la cuenta AMG.
+  Future<void> _loadDeviceId() async {
+    final id = await AppAuthService().deviceId();
     if (!mounted) return;
-    setState(() {
-      _deviceId = id;
-      _storedEmail = email;
-      _licenseKey = key;
-      if (email != null) _emailController.text = email;
-    });
+    setState(() => _deviceId = id);
   }
 
   Future<void> _checkUpdates() async {
@@ -73,20 +56,6 @@ class _AboutAppScreenState extends State<AboutAppScreen> {
       await handleManualUpdateCheck(context, service: _updateService);
     } finally {
       if (mounted) setState(() => _checking = false);
-    }
-  }
-
-  Future<void> _submitIdentify() async {
-    setState(() => _identifying = true);
-    try {
-      final result = await _installation.identify(_emailController.text);
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(result.message ?? (result.ok ? 'OK' : 'Error'))),
-      );
-      if (result.ok) await _loadInstallation();
-    } finally {
-      if (mounted) setState(() => _identifying = false);
     }
   }
 
@@ -177,14 +146,15 @@ class _AboutAppScreenState extends State<AboutAppScreen> {
           ),
           const SizedBox(height: 16),
           AppSectionCard(
-            title: 'Instalación',
+            title: 'Dispositivo',
             icon: Icons.phonelink_setup_outlined,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const Text(
-                  'Registro anónimo en el panel AMG (versión y dispositivo). '
-                  'No se envían mediciones ni medicación.',
+                  'Identificador de este móvil en tu cuenta AMG. Puede '
+                  'pedírtelo soporte. Tus mediciones y medicación no salen '
+                  'del teléfono.',
                   style: TextStyle(color: AppColors.subtitle, fontSize: 13),
                 ),
                 const SizedBox(height: 12),
@@ -192,23 +162,6 @@ class _AboutAppScreenState extends State<AboutAppScreen> {
                   'ID: $_deviceId',
                   style: const TextStyle(fontSize: 12, fontFamily: 'monospace'),
                 ),
-                if (_licenseKey != null) ...[
-                  const SizedBox(height: 4),
-                  SelectableText(
-                    'Clave: $_licenseKey',
-                    style: const TextStyle(
-                      fontSize: 12,
-                      fontFamily: 'monospace',
-                    ),
-                  ),
-                ],
-                if (_storedEmail != null) ...[
-                  const SizedBox(height: 4),
-                  Text(
-                    'Email: $_storedEmail',
-                    style: const TextStyle(fontSize: 13),
-                  ),
-                ],
                 const SizedBox(height: 8),
                 Align(
                   alignment: Alignment.centerLeft,
@@ -223,32 +176,6 @@ class _AboutAppScreenState extends State<AboutAppScreen> {
                     label: const Text('Copiar ID'),
                   ),
                 ),
-                if (InstallationService.isConfigured) ...[
-                  const SizedBox(height: 8),
-                  TextField(
-                    controller: _emailController,
-                    keyboardType: TextInputType.emailAddress,
-                    decoration: const InputDecoration(
-                      labelText: 'Email de contacto (opcional)',
-                      border: OutlineInputBorder(),
-                      isDense: true,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  OutlinedButton(
-                    onPressed: _identifying ? null : _submitIdentify,
-                    child: Text(
-                      _identifying ? 'Enviando…' : 'Asociar email',
-                    ),
-                  ),
-                ] else ...[
-                  const SizedBox(height: 8),
-                  const Text(
-                    'API no configurada en este build '
-                    '(INSTALLATION_API_URL / LICENSE_API_URL).',
-                    style: TextStyle(color: AppColors.subtitle, fontSize: 12),
-                  ),
-                ],
               ],
             ),
           ),

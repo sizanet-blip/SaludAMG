@@ -115,7 +115,7 @@ class SaludAmgAppBar extends StatelessWidget implements PreferredSizeWidget {
                     middleSpacing: 8,
                   ),
                 ),
-                if (bottom != null) bottom!,
+                ?bottom,
                 if (bottom == null)
                   const SizedBox(
                     height: _borderHeight,

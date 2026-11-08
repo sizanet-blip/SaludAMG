@@ -1,12 +1,23 @@
+/// Cajas cifradas (AES). Las antiguas sin cifrar (`legacy*`) se migran y se
+/// borran al arrancar (ver `hive_setup.dart`).
 abstract final class HiveBoxes {
-  static const profile = 'profile';
-  static const readings = 'readings';
-  static const reminders = 'reminders';
-  static const importPrefs = 'import_prefs';
-  static const medications = 'medications';
-  static const medicationDoseLogs = 'medication_dose_logs';
-  static const medicationPrefs = 'medication_prefs';
-  static const appLock = 'app_lock';
+  static const profile = 'profile_e';
+  static const readings = 'readings_e';
+  static const reminders = 'reminders_e';
+  static const importPrefs = 'import_prefs_e';
+  static const medications = 'medications_e';
+  static const medicationDoseLogs = 'medication_dose_logs_e';
+  static const medicationPrefs = 'medication_prefs_e';
+  static const appLock = 'app_lock_e';
+
+  static const legacyProfile = 'profile';
+  static const legacyReadings = 'readings';
+  static const legacyReminders = 'reminders';
+  static const legacyImportPrefs = 'import_prefs';
+  static const legacyMedications = 'medications';
+  static const legacyMedicationDoseLogs = 'medication_dose_logs';
+  static const legacyMedicationPrefs = 'medication_prefs';
+  static const legacyAppLock = 'app_lock';
 }
 
 /// Identificadores de adaptador. No reutilizar un número ya publicado.

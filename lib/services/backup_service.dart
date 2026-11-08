@@ -110,7 +110,12 @@ class BackupService {
     }
     final file = files.first;
     final raw = await file.readAsBytes();
-    final decoded = jsonDecode(utf8.decode(raw));
+    final Object? decoded;
+    try {
+      decoded = jsonDecode(utf8.decode(raw));
+    } catch (_) {
+      throw StateError('El archivo no es una copia válida.');
+    }
     if (decoded is! Map<String, dynamic>) {
       throw StateError('El archivo no es una copia válida.');
     }
@@ -174,77 +179,103 @@ class BackupService {
     });
   }
 
+  /// Restaura una copia. Primero lee y valida TODO el archivo; solo si no hay
+  /// errores se sustituyen los datos del móvil. Así un archivo dañado no deja
+  /// la app a medias ni borra nada.
   Future<String> restoreFromMap(Map<String, dynamic> payload) async {
     if (payload['app'] != null && payload['app'] != 'SaludAMG') {
       throw StateError('El archivo no es de SaludAMG.');
     }
 
-    final profileMap = payload['profile'];
-    if (profileMap is Map<String, dynamic>) {
-      await profiles.save(_profileFromJson(profileMap));
+    // 1) Leer y convertir (sin tocar nada guardado).
+    final UserProfile? profile;
+    final List<BloodPressureModel>? readings;
+    final ReminderConfig? reminderConfig;
+    final ImportPreferences? importPrefs;
+    final List<Medication>? meds;
+    final List<MedicationDoseLog>? logs;
+    final MedicationPreferences? medPrefs;
+    try {
+      final profileMap = payload['profile'];
+      profile = profileMap is Map<String, dynamic>
+          ? _profileFromJson(profileMap)
+          : null;
+      readings = _parseList(payload, 'readings', _readingFromJson);
+      final remindersMap = payload['reminders'];
+      reminderConfig = remindersMap is Map<String, dynamic>
+          ? _reminderFromJson(remindersMap)
+          : null;
+      final importMap = payload['importPreferences'];
+      importPrefs = importMap is Map<String, dynamic>
+          ? _importPrefsFromJson(importMap)
+          : null;
+      meds = _parseList(payload, 'medications', Medication.fromJson);
+      logs = _parseList(payload, 'doseLogs', MedicationDoseLog.fromJson);
+      final medPrefsMap = payload['medicationPreferences'];
+      medPrefs = medPrefsMap is Map<String, dynamic>
+          ? MedicationPreferences.fromJson(medPrefsMap)
+          : null;
+    } catch (error) {
+      debugPrint('Copia no válida: $error');
+      throw StateError(
+        'El archivo está dañado o no es una copia válida. '
+        'No se ha cambiado nada.',
+      );
     }
 
-    // Listas: si la clave existe (aunque vacía), reemplaza por completo.
-    if (payload.containsKey('readings')) {
+    // 2) Sustituir. Listas: si la clave existe (aunque vacía), reemplaza todo.
+    if (profile != null) await profiles.save(profile);
+    if (readings != null) {
       for (final existing in measurements.getAll()) {
         await measurements.delete(existing.id);
       }
-      final readingsRaw = payload['readings'];
-      if (readingsRaw is List) {
-        for (final item in readingsRaw) {
-          if (item is Map<String, dynamic>) {
-            await measurements.save(_readingFromJson(item));
-          }
-        }
+      for (final reading in readings) {
+        await measurements.save(reading);
       }
     }
-
-    final remindersMap = payload['reminders'];
-    if (remindersMap is Map<String, dynamic>) {
-      await reminders.save(_reminderFromJson(remindersMap));
-    }
-
-    final importMap = payload['importPreferences'];
-    if (importMap is Map<String, dynamic>) {
-      await importPreferences.save(_importPrefsFromJson(importMap));
-    }
-
-    if (payload.containsKey('medications')) {
+    if (reminderConfig != null) await reminders.save(reminderConfig);
+    if (importPrefs != null) await importPreferences.save(importPrefs);
+    if (meds != null) {
       for (final existing in medications.getAll()) {
         await medications.delete(existing.id);
       }
-      final medsRaw = payload['medications'];
-      if (medsRaw is List) {
-        for (final item in medsRaw) {
-          if (item is Map<String, dynamic>) {
-            await medications.save(Medication.fromJson(item));
-          }
-        }
+      for (final med in meds) {
+        await medications.save(med);
       }
     }
-
-    if (payload.containsKey('doseLogs')) {
+    if (logs != null) {
       for (final existing in medicationDoseLogs.getAll()) {
         await medicationDoseLogs.delete(existing.id);
       }
-      final logsRaw = payload['doseLogs'];
-      if (logsRaw is List) {
-        for (final item in logsRaw) {
-          if (item is Map<String, dynamic>) {
-            await medicationDoseLogs.save(MedicationDoseLog.fromJson(item));
-          }
-        }
+      for (final log in logs) {
+        await medicationDoseLogs.save(log);
       }
     }
-
-    final medPrefs = payload['medicationPreferences'];
-    if (medPrefs is Map<String, dynamic>) {
-      await medicationPreferences.save(MedicationPreferences.fromJson(medPrefs));
-    }
+    if (medPrefs != null) await medicationPreferences.save(medPrefs);
 
     final readingCount = measurements.getAll().length;
     final medCount = medications.getAll().length;
     return 'Restaurado: $readingCount mediciones, $medCount medicaciones.';
+  }
+
+  /// `null` si la clave no está (no se toca esa parte). Lanza si algún
+  /// elemento no se puede leer.
+  static List<T>? _parseList<T>(
+    Map<String, dynamic> payload,
+    String key,
+    T Function(Map<String, dynamic>) parse,
+  ) {
+    if (!payload.containsKey(key)) return null;
+    final raw = payload[key];
+    if (raw == null) return <T>[];
+    if (raw is! List) throw FormatException('«$key» no es una lista');
+    return [
+      for (final item in raw)
+        if (item is Map<String, dynamic>)
+          parse(item)
+        else
+          throw FormatException('Elemento no válido en «$key»'),
+    ];
   }
 
   Map<String, dynamic> _profileToJson(UserProfile p) => {

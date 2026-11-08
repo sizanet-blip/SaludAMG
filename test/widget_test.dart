@@ -1,4 +1,6 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'package:salud_amg/app.dart';
 import 'package:salud_amg/app_scope.dart';
 import 'package:salud_amg/domain/entities/app_lock_config.dart';
@@ -8,8 +10,11 @@ import 'package:salud_amg/domain/entities/medication.dart';
 import 'package:salud_amg/domain/entities/medication_dose_log.dart';
 import 'package:salud_amg/domain/entities/medication_preferences.dart';
 import 'package:salud_amg/domain/entities/reminder_config.dart';
+import 'package:salud_amg/domain/entities/sync_info.dart';
+import 'package:salud_amg/domain/enums/health_enums.dart';
 import 'package:salud_amg/domain/entities/user_profile.dart';
 import 'package:salud_amg/domain/repositories/repositories.dart';
+import 'package:salud_amg/presentation/screens/measurement_form_screen.dart';
 import 'package:salud_amg/services/app_lock_service.dart';
 import 'package:salud_amg/services/backup_service.dart';
 import 'package:salud_amg/services/export_service.dart';
@@ -218,4 +223,141 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Añadir medición'), findsOneWidget);
   });
+
+  group('restaurar copia', () {
+    late _MemoryMeasurements measurements;
+    late _MemoryMedications medications;
+    late BackupService backup;
+
+    setUp(() async {
+      measurements = _MemoryMeasurements();
+      medications = _MemoryMedications();
+      backup = BackupService(
+        profiles: _MemoryProfiles(),
+        measurements: measurements,
+        reminders: _MemoryReminders(),
+        importPreferences: _MemoryImportPrefs(),
+        medications: medications,
+        medicationDoseLogs: _MemoryDoseLogs(),
+        medicationPreferences: _MemoryMedPrefs(),
+      );
+      await measurements.save(_reading(id: 'previa'));
+    });
+
+    test('un archivo dañado no borra nada', () async {
+      await expectLater(
+        backup.restoreFromMap({
+          'app': 'SaludAMG',
+          'readings': [
+            {'id': 'buena', 'systolic': 120, 'diastolic': 80},
+            {'id': 'mala', 'systolic': 'no es un número'},
+          ],
+          'medications': <Object>[],
+        }),
+        throwsA(isA<StateError>()),
+      );
+      expect(measurements.getAll().map((r) => r.id), ['previa']);
+    });
+
+    test('un archivo correcto sustituye las mediciones', () async {
+      final message = await backup.restoreFromMap({
+        'app': 'SaludAMG',
+        'readings': [
+          {'id': 'nueva', 'systolic': 125, 'diastolic': 82},
+        ],
+      });
+      expect(measurements.getAll().map((r) => r.id), ['nueva']);
+      expect(message, contains('1 mediciones'));
+    });
+  });
+
+  testWidgets('editar sin tocar conserva los valores importados tal cual',
+      (tester) async {
+    await initializeDateFormatting('es_ES');
+    final measurements = _MemoryMeasurements();
+    final profiles = _MemoryProfiles();
+    final reminders = _MemoryReminders();
+    final importPreferences = _MemoryImportPrefs();
+    final medications = _MemoryMedications();
+    final doseLogs = _MemoryDoseLogs();
+    final medPrefs = _MemoryMedPrefs();
+    // Peso con 2 decimales y HRV fuera del rango de entrada manual (1–400).
+    final original = _reading(id: 'r1', weightKg: 72.46, hrvMs: 450);
+    await measurements.save(original);
+
+    await tester.pumpWidget(
+      AppScope(
+        dependencies: AppDependencies(
+          profiles: profiles,
+          measurements: measurements,
+          reminders: reminders,
+          importPreferences: importPreferences,
+          medications: medications,
+          medicationDoseLogs: doseLogs,
+          medicationPreferences: medPrefs,
+          appLock: AppLockService(_MemoryAppLock()),
+          healthSync: null,
+          notifications: NotificationService(),
+          exports: ExportService(),
+          backup: BackupService(
+            profiles: profiles,
+            measurements: measurements,
+            reminders: reminders,
+            importPreferences: importPreferences,
+            medications: medications,
+            medicationDoseLogs: doseLogs,
+            medicationPreferences: medPrefs,
+          ),
+        ),
+        child: MaterialApp(
+          home: Builder(
+            builder: (context) => TextButton(
+              onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute<bool>(
+                  builder: (_) => MeasurementFormScreen(existing: original),
+                ),
+              ),
+              child: const Text('abrir'),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('abrir'));
+    await tester.pumpAndSettle();
+
+    final save = find.text('Guardar medición');
+    await tester.scrollUntilVisible(
+      save,
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(save);
+    await tester.pumpAndSettle();
+
+    final saved = measurements.getAll().single;
+    expect(saved.weightKg, 72.46);
+    expect(saved.hrvMs, 450);
+    expect(saved.systolic, 130);
+    expect(saved.diastolic, 85);
+  });
+}
+
+BloodPressureModel _reading({
+  required String id,
+  double? weightKg,
+  double? hrvMs,
+}) {
+  return BloodPressureModel(
+    id: id,
+    systolic: 130,
+    diastolic: 85,
+    pulse: 70,
+    weightKg: weightKg,
+    hrvMs: hrvMs,
+    measuredAt: DateTime(2026, 11, 1, 9, 30),
+    context: MeasurementContext.unspecified,
+    notes: '',
+    syncInfo: const SyncInfo.manual(),
+  );
 }

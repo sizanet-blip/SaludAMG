@@ -55,8 +55,55 @@ class _MeasurementFormScreenState extends State<MeasurementFormScreen> {
   List<BloodPressureModel> _imported = const [];
   final _selected = <String>{};
   final _active = <ImportMetric>{};
+  final _initialText = <TextEditingController, String>{};
 
   bool get _editing => widget.existing != null;
+
+  List<TextEditingController> get _valueControllers => [
+        _systolic,
+        _diastolic,
+        _pulse,
+        _restingPulse,
+        _oxygen,
+        _temperature,
+        _glucose,
+        _weight,
+        _bodyFat,
+        _bmi,
+        _steps,
+        _sleep,
+        _hrv,
+      ];
+
+  /// Al editar: el campo sigue con el valor que traía la medición.
+  bool _untouched(TextEditingController controller) {
+    final initial = _initialText[controller];
+    return initial != null && controller.text.trim() == initial.trim();
+  }
+
+  /// Valor entero a guardar. Si el dato está oculto o no se ha tocado,
+  /// conserva el de la medición original.
+  int? _keepInt(
+    ImportMetric metric,
+    TextEditingController controller,
+    int? original,
+  ) {
+    if (!_on(metric) || _untouched(controller)) {
+      return widget.existing == null ? null : original;
+    }
+    return _parseInt(controller);
+  }
+
+  double? _keepDouble(
+    ImportMetric metric,
+    TextEditingController controller,
+    double? original,
+  ) {
+    if (!_on(metric) || _untouched(controller)) {
+      return widget.existing == null ? null : original;
+    }
+    return _parseDouble(controller);
+  }
 
   @override
   void initState() {
@@ -99,6 +146,11 @@ class _MeasurementFormScreenState extends State<MeasurementFormScreen> {
       _context = existing.context;
       // Al editar, no ocultar un valor ya guardado aunque esté desactivado en config.
       _active.addAll(_metricsFromReading(existing));
+      // Texto inicial de cada campo: si no se toca, se guarda el valor original
+      // tal cual (sin redondear a 1 decimal ni validar rangos de entrada manual).
+      for (final controller in _valueControllers) {
+        _initialText[controller] = controller.text;
+      }
     } else {
       _measuredAt = DateTime.now();
     }
@@ -575,6 +627,7 @@ class _MeasurementFormScreenState extends State<MeasurementFormScreen> {
       validator: (raw) {
         final text = raw?.trim() ?? '';
         if (text.isEmpty) return required ? 'Obligatorio' : null;
+        if (_untouched(controller)) return null;
         final value = int.tryParse(text);
         if (value == null || value < min || value > max) return '$min–$max';
         return null;
@@ -602,6 +655,7 @@ class _MeasurementFormScreenState extends State<MeasurementFormScreen> {
       validator: (raw) {
         final text = raw?.trim() ?? '';
         if (text.isEmpty) return required ? 'Obligatorio' : null;
+        if (_untouched(controller)) return null;
         final value = double.tryParse(text.replaceAll(',', '.'));
         if (value == null || value < min || value > max) {
           return '${min.toStringAsFixed(0)}–${max.toStringAsFixed(0)}';
@@ -686,11 +740,13 @@ class _MeasurementFormScreenState extends State<MeasurementFormScreen> {
     }
     if (!_formKey.currentState!.validate()) return;
 
-    int? systolic;
-    int? diastolic;
+    final existing = widget.existing;
+    // Tensión oculta en «Datos a medir»: se conserva la de la medición.
+    int? systolic = existing?.systolic;
+    int? diastolic = existing?.diastolic;
     if (_on(ImportMetric.bloodPressure)) {
-      systolic = _parseInt(_systolic);
-      diastolic = _parseInt(_diastolic);
+      systolic = _keepInt(ImportMetric.bloodPressure, _systolic, systolic);
+      diastolic = _keepInt(ImportMetric.bloodPressure, _diastolic, diastolic);
       if ((systolic == null) != (diastolic == null)) {
         setState(() => _formError = 'Completa sistólica y diastólica, o déjalas vacías.');
         return;
@@ -703,21 +759,25 @@ class _MeasurementFormScreenState extends State<MeasurementFormScreen> {
       }
     }
 
-    final pulse = _on(ImportMetric.pulse) ? _parseInt(_pulse) : null;
+    final e = existing;
+    final pulse = _keepInt(ImportMetric.pulse, _pulse, e?.pulse);
     final restingPulse =
-        _on(ImportMetric.restingPulse) ? _parseInt(_restingPulse) : null;
-    final oxygen = _on(ImportMetric.oxygen) ? _parseDouble(_oxygen) : null;
-    final temperature =
-        _on(ImportMetric.temperature) ? _parseDouble(_temperature) : null;
-    final glucose = _on(ImportMetric.glucose) ? _parseDouble(_glucose) : null;
-    final weight = _on(ImportMetric.weight) ? _parseDouble(_weight) : null;
-    final bodyFat = _on(ImportMetric.bodyFat) ? _parseDouble(_bodyFat) : null;
-    final bmi = _on(ImportMetric.bmi) ? _parseDouble(_bmi) : null;
-    final steps = _on(ImportMetric.steps) ? _parseInt(_steps) : null;
-    final sleep = _on(ImportMetric.sleep) ? _parseInt(_sleep) : null;
-    final hrv = _on(ImportMetric.hrv) ? _parseDouble(_hrv) : null;
+        _keepInt(ImportMetric.restingPulse, _restingPulse, e?.restingPulse);
+    final oxygen =
+        _keepDouble(ImportMetric.oxygen, _oxygen, e?.oxygenSaturation);
+    final temperature = _keepDouble(
+        ImportMetric.temperature, _temperature, e?.bodyTemperatureC);
+    final glucose = _keepDouble(ImportMetric.glucose, _glucose, e?.glucoseMgDl);
+    final weight = _keepDouble(ImportMetric.weight, _weight, e?.weightKg);
+    final bodyFat =
+        _keepDouble(ImportMetric.bodyFat, _bodyFat, e?.bodyFatPercent);
+    final bmi = _keepDouble(ImportMetric.bmi, _bmi, e?.bmi);
+    final steps = _keepInt(ImportMetric.steps, _steps, e?.steps);
+    final sleep = _keepInt(ImportMetric.sleep, _sleep, e?.sleepMinutes);
+    final hrv = _keepDouble(ImportMetric.hrv, _hrv, e?.hrvMs);
 
     final hasAnyValue = systolic != null ||
+        diastolic != null ||
         pulse != null ||
         restingPulse != null ||
         oxygen != null ||
