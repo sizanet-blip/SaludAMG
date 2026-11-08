@@ -40,6 +40,8 @@ Lista:
 - `26_saludamg_informe_pdf_detalle.png`
 - `27_saludamg_resumen.png` — dashboard (última toma / evolución)
 - `28_saludamg_config.png` — hub de configuración
+- `29_saludamg_tomado_hora.png` — «Tomado»: elegir la hora real de la toma
+- `30_saludamg_desbloqueo.png` — pantalla de desbloqueo (PIN / huella)
 
 ## 2. Pega el HTML
 Abre `docs/manual-web-cms.html`, selecciona todo, copia y pégalo en el campo **contenido** del CMS (modo código/HTML si existe).
@@ -47,17 +49,24 @@ Abre `docs/manual-web-cms.html`, selecciona todo, copia y pégalo en el campo **
 ## 3. Regenerar capturas (emulador)
 Con el emulador en marcha:
 
-```bash
-# Pantallas de la app (sin gate de auth) — recomendado para menú/home
-flutter run -d emulator-5554
-python tool_capture_help.py app
+Compila con el panel local y entra con una cuenta de pruebas
+(`tool/cuenta-pruebas.local.json`, no se sube a git):
 
-# Pantallas de acceso (con URL del panel local)
+```bash
 # En Android + *.desarrollo la app usa el puente 10.0.2.2 (como TiroAMG).
 # Móvil físico: --dart-define=LICENSE_DEV_HOST=192.168.x.x
 flutter run -d emulator-5554 --dart-define=APP_AUTH_API_URL=https://panel.amg.desarrollo/
+
+# Pantallas de acceso: con la sesión cerrada
 python tool_capture_help.py auth
+
+# Pantallas de la app: con la sesión iniciada. Para «Pendientes de ayer»,
+# restaura antes una copia con una medicación que empiece días atrás.
+python tool_capture_help.py app
 ```
+
+`30_saludamg_desbloqueo.png` se hace a mano: pon un PIN en Configuración → Bloqueo,
+sal de la app y vuelve a abrirla.
 
 ## 4. Guarda y revisa la web del programa
 Comprueba que las capturas (200 px de ancho) se ven bien en la página publicada.

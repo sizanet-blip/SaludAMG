@@ -16,6 +16,7 @@ import '../domain/entities/medication.dart';
 import '../domain/entities/medication_dose_log.dart';
 import '../domain/entities/sync_info.dart';
 import '../domain/entities/user_profile.dart';
+import 'temp_files.dart';
 
 /// Informes con la ficha delante y el desglose de lecturas detrás.
 class ExportService {
@@ -508,6 +509,7 @@ class ExportService {
     'Medicación',
     'Horario',
     'Estado',
+    'Hora de toma',
     'Registrado',
   ];
 
@@ -543,6 +545,9 @@ class ExportService {
       TextCellValue(name ?? log.medicationId),
       TextCellValue(formatDateTime(log.scheduledAt)),
       TextCellValue(log.status.label),
+      TextCellValue(
+        log.effectiveTakenAt == null ? '' : formatDateTime(log.effectiveTakenAt!),
+      ),
       TextCellValue(formatDateTime(log.recordedAt)),
     ];
   }
@@ -573,6 +578,7 @@ class ExportService {
       name ?? log.medicationId,
       formatDateTime(log.scheduledAt),
       log.status.label,
+      log.effectiveTakenAt == null ? '—' : formatDateTime(log.effectiveTakenAt!),
       formatDateTime(log.recordedAt),
     ];
   }
@@ -584,6 +590,7 @@ class ExportService {
       value == null ? TextCellValue('') : DoubleCellValue(value);
 
   Future<File> _writeTemp(String name, List<int> bytes) async {
+    await TempFiles.cleanOld();
     final directory = await getTemporaryDirectory();
     final file = File('${directory.path}${Platform.pathSeparator}$name');
     await file.writeAsBytes(bytes, flush: true);
