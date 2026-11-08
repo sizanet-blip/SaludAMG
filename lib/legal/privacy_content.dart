@@ -1,7 +1,7 @@
 /// Política de privacidad de SaludAMG (texto en la app).
 abstract final class PrivacyContent {
-  static const String version = '1.1';
-  static const String versionDate = '2026-10-28';
+  static const String version = '1.2';
+  static const String versionDate = '2026-11-07';
   static const String responsable = 'Alberto Maestre Gutiérrez';
   static const String emailContacto = 'info@albertomaestre.es';
   static const String web = 'https://www.albertomaestre.es/';
@@ -37,7 +37,7 @@ Estos datos se almacenan de forma local y no se envían al panel por el solo hec
 
 4. Qué se envía al servidor (cuenta AMG)
 Si configuras la conexión con el panel AMG, al registrarte o iniciar sesión pueden tratarse:
-• Usuario, contraseña (almacenada cifrada/hash en el servidor), email opcional y código de recuperación.
+• Usuario, contraseña (almacenada cifrada/hash en el servidor), y email, que se usa para recuperar la contraseña.
 • Identificador técnico de dispositivo, plataforma, versión de la app y build.
 • App solicitada ($appName), estado de la cuenta (pendiente / activa) y sesiones.
 No se envían al panel tus mediciones, medicación ni historial clínico como parte del registro de cuenta.

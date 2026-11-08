@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 import '../../app.dart';
 import '../../core/theme/app_theme.dart';
@@ -19,7 +18,6 @@ class _CuentaAmgScreenState extends State<CuentaAmgScreen> {
   final _auth = AppAuthService();
   var _username = '—';
   var _status = '—';
-  String? _recovery;
 
   @override
   void initState() {
@@ -30,12 +28,10 @@ class _CuentaAmgScreenState extends State<CuentaAmgScreen> {
   Future<void> _load() async {
     final user = await _auth.username();
     final status = await _auth.status();
-    final recovery = await _auth.lastRecoveryCode();
     if (!mounted) return;
     setState(() {
       _username = (user == null || user.isEmpty) ? '—' : user;
       _status = (status == null || status.isEmpty) ? '—' : status;
-      _recovery = recovery;
     });
   }
 
@@ -84,31 +80,6 @@ class _CuentaAmgScreenState extends State<CuentaAmgScreen> {
                 _row('Usuario', _username),
                 const SizedBox(height: 8),
                 _row('Estado', _status),
-                if (_recovery != null && _recovery!.isNotEmpty) ...[
-                  const SizedBox(height: 12),
-                  const Text(
-                    'Código de recuperación (guárdalo):',
-                    style: TextStyle(color: AppColors.subtitle, fontSize: 13),
-                  ),
-                  const SizedBox(height: 6),
-                  SelectableText(
-                    _recovery!,
-                    style: const TextStyle(
-                      fontFamily: 'monospace',
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: TextButton.icon(
-                      onPressed: () => Clipboard.setData(
-                        ClipboardData(text: _recovery!),
-                      ),
-                      icon: const Icon(Icons.copy, size: 18),
-                      label: const Text('Copiar'),
-                    ),
-                  ),
-                ],
                 const SizedBox(height: 12),
                 OutlinedButton.icon(
                   onPressed: _logout,

@@ -178,7 +178,7 @@ class _MemoryAppLock implements AppLockRepository {
 }
 
 void main() {
-  testWidgets('la home vacía muestra el CTA de medición', (tester) async {
+  testWidgets('el resumen vacío muestra el CTA de medición', (tester) async {
     final profiles = _MemoryProfiles();
     final measurements = _MemoryMeasurements();
     final reminders = _MemoryReminders();
@@ -212,6 +212,9 @@ void main() {
         ),
       ),
     );
+    await tester.pumpAndSettle();
+    // La pantalla de inicio es un menú: el aviso está dentro de Resumen.
+    await tester.tap(find.text('Resumen'));
     await tester.pumpAndSettle();
     expect(find.text('Añadir medición'), findsOneWidget);
   });

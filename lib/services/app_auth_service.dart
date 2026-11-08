@@ -36,7 +36,7 @@ class AppAuthService {
   static const _kUsername = 'app_auth_username';
   static const _kStatus = 'app_auth_status';
   static const _kDeviceId = 'installation_device_id';
-  static const _kRecoveryShown = 'app_auth_recovery_code';
+  static const _kActivated = 'app_auth_activated';
   static const _kPrivacyAcceptedVer = 'app_auth_privacy_accepted_version';
   static const _kTermsAcceptedVer = 'app_auth_terms_accepted_version';
 
@@ -75,9 +75,24 @@ class AppAuthService {
   Future<AppAuthResult> register({
     required String username,
     required String password,
-    String? email,
+    required String email,
+    required String emailRepeat,
     required bool acceptedLegal,
   }) async {
+    final cleanEmail = email.trim().toLowerCase();
+    if (cleanEmail.isEmpty) {
+      return const AppAuthResult(
+        ok: false,
+        message: 'El email es obligatorio: se usa para recuperar la contraseña.',
+      );
+    }
+    if (cleanEmail != emailRepeat.trim().toLowerCase()) {
+      return const AppAuthResult(
+        ok: false,
+        message: 'Los emails no coinciden.',
+      );
+    }
+
     if (!acceptedLegal) {
       return const AppAuthResult(
         ok: false,
@@ -98,7 +113,8 @@ class AppAuthService {
       final body = {
         'username': username.trim(),
         'password': password,
-        if (email != null && email.trim().isNotEmpty) 'email': email.trim(),
+        'email': cleanEmail,
+        'email_repeat': emailRepeat.trim().toLowerCase(),
         'app_id': appId,
         'device_id': id,
         'platform': _platformKey,
@@ -111,7 +127,6 @@ class AppAuthService {
       final data = _decode(response.body);
       final code = data['code']?.toString();
       if (response.statusCode >= 200 && response.statusCode < 300) {
-        final recovery = data['recovery_code']?.toString();
         final account = data['account'];
         final status = account is Map
             ? account['status']?.toString()
@@ -122,15 +137,12 @@ class AppAuthService {
           _kStatus,
           code == 'app_access_pending' ? 'app_access_pending' : (status ?? 'pending'),
         );
-        if (recovery != null && recovery.isNotEmpty) {
-          await p.setString(_kRecoveryShown, recovery);
-        }
+        await p.setBool(_kActivated, true);
         await _syncLocalLegalAcceptance();
         return AppAuthResult(
           ok: true,
           pending: true,
           message: data['message']?.toString() ?? 'Solicitud enviada.',
-          recoveryCode: recovery,
           code: code,
         );
       }
@@ -284,6 +296,7 @@ class AppAuthService {
         final token = data['token'].toString();
         final p = await _prefs;
         await p.setString(_kToken, token);
+        await p.setBool(_kActivated, true);
         await p.setString(_kUsername, username.trim());
         await p.setString(_kStatus, status ?? 'active');
         await _syncLocalLegalAcceptance();
@@ -321,6 +334,7 @@ class AppAuthService {
             final token = retryData['token'].toString();
             final p = await _prefs;
             await p.setString(_kToken, token);
+            await p.setBool(_kActivated, true);
             await p.setString(_kUsername, username.trim());
             final st = retryData['account'] is Map
                 ? (retryData['account'] as Map)['status']?.toString()
@@ -419,6 +433,7 @@ class AppAuthService {
         final p = await _prefs;
         await p.setString(_kUsername, username.trim());
         await p.setString(_kStatus, 'app_access_pending');
+        await p.setBool(_kActivated, true);
         await p.remove(_kToken);
         await _syncLocalLegalAcceptance();
         return AppAuthResult(
@@ -442,35 +457,23 @@ class AppAuthService {
     }
   }
 
-  Future<AppAuthResult> recover({
-    required String username,
-    required String recoveryCode,
-    required String newPassword,
-  }) async {
+  /// Pide al panel el enlace de recuperación. La respuesta no revela si existe.
+  Future<AppAuthResult> requestPasswordReset({required String email}) async {
+    final cleanEmail = email.trim();
+    if (cleanEmail.isEmpty) {
+      return const AppAuthResult(ok: false, message: 'Escribe tu email.');
+    }
     if (!isConfigured) {
       return const AppAuthResult(ok: false, message: 'API no configurada.');
     }
     try {
-      final response = await _post('/app-auth/recover', {
-        'username': username.trim(),
-        'recovery_code': recoveryCode.trim(),
-        'new_password': newPassword,
+      final response = await _post('/app-auth/request-password-reset', {
+        'email': cleanEmail,
       });
       final data = _decode(response.body);
-      if (response.statusCode >= 200 && response.statusCode < 300) {
-        final recovery = data['recovery_code']?.toString();
-        if (recovery != null) {
-          await (await _prefs).setString(_kRecoveryShown, recovery);
-        }
-        return AppAuthResult(
-          ok: true,
-          message: data['message']?.toString() ?? 'Contraseña actualizada.',
-          recoveryCode: recovery,
-        );
-      }
       return AppAuthResult(
-        ok: false,
-        message: data['message']?.toString() ?? 'Error',
+        ok: response.statusCode >= 200 && response.statusCode < 300,
+        message: data['message']?.toString() ?? 'Error ${response.statusCode}',
       );
     } catch (e) {
       return AppAuthResult(ok: false, message: e.toString());
@@ -498,8 +501,12 @@ class AppAuthService {
     }
   }
 
-  Future<String?> lastRecoveryCode() async =>
-      (await _prefs).getString(_kRecoveryShown);
+  /// «Crear cuenta» solo se ofrece hasta la primera activación en este dispositivo.
+  Future<bool> hasActivated() async {
+    final p = await _prefs;
+    return (p.getBool(_kActivated) ?? false) ||
+        (p.getString(_kUsername)?.trim().isNotEmpty ?? false);
+  }
 
   /// Avisa al panel de la versión aceptada (como TiroAMG). No bloquea el login.
   Future<void> _acceptLegalOnServer(String token) async {
@@ -582,7 +589,6 @@ class AppAuthResult {
     this.needsAppAccess = false,
     this.alreadyHasAccess = false,
     this.message,
-    this.recoveryCode,
     this.code,
   });
 
@@ -594,6 +600,5 @@ class AppAuthResult {
   final bool needsAppAccess;
   final bool alreadyHasAccess;
   final String? message;
-  final String? recoveryCode;
   final String? code;
 }

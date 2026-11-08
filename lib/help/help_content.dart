@@ -55,7 +55,7 @@ abstract final class HelpContent {
         bullets: [
           'Al abrir la app puede pedirte usuario y contraseña (cuenta AMG).',
           'Regístrate, acepta privacidad y condiciones, y espera la aprobación del administrador si la cuenta queda pendiente.',
-          'Guarda el código de recuperación que se muestra al registrarte.',
+          'Usa un email válido: sirve para recuperar la contraseña.',
           'Sin API configurada en el build, puedes usar la app directamente.',
         ],
       ),
@@ -107,9 +107,9 @@ abstract final class HelpContent {
           'Si el build incluye la URL de autenticación, al abrir verás login/registro.',
         ],
         bullets: [
-          'Registro: usuario, contraseña, email opcional; aceptar privacidad y condiciones.',
+          'Registro: usuario, contraseña, email repetido; aceptar privacidad y condiciones.',
           'Pendiente: un administrador debe activar la cuenta en el panel antes de entrar.',
-          'Código de recuperación: guárdalo; sirve para restablecer la contraseña.',
+          'Contraseña olvidada: pide en la pantalla de acceso un enlace a tu email.',
           'Instalación: en Acerca de (Configuración) puedes asociar un email de contacto (opcional) y ver el ID de dispositivo.',
         ],
       ),
@@ -210,7 +210,7 @@ abstract final class HelpContent {
     HelpFaqItem(
       question: 'Olvidé la contraseña',
       answer:
-          'Usa la recuperación con el código que se mostró al registrarte (y usuario). Si pusiste email, también puede usarse según el flujo disponible.',
+          'Pulsa «Olvidé mi contraseña» en la pantalla de acceso y escribe tu email: recibirás un enlace para crear una nueva.',
     ),
     HelpFaqItem(
       question: '¿Se envían mis mediciones al servidor?',

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../legal/privacy_content.dart';
@@ -26,8 +25,7 @@ class _AuthGateScreenState extends State<AuthGateScreen> {
   final _userCtrl = TextEditingController();
   final _passCtrl = TextEditingController();
   final _emailCtrl = TextEditingController();
-  final _codeCtrl = TextEditingController();
-  final _newPassCtrl = TextEditingController();
+  final _emailRepeatCtrl = TextEditingController();
 
   var _tab = _AuthTab.login;
   var _busy = false;
@@ -39,7 +37,7 @@ class _AuthGateScreenState extends State<AuthGateScreen> {
   /// Solo tras login con cuenta válida sin acceso a esta app.
   var _showRequestAccess = false;
   String? _message;
-  String? _recoveryCode;
+  var _canRegister = false;
 
   @override
   void initState() {
@@ -50,8 +48,10 @@ class _AuthGateScreenState extends State<AuthGateScreen> {
   Future<void> _bootstrap() async {
     final status = await _auth.status();
     final user = await _auth.username();
+    final activated = await _auth.hasActivated();
     if (!mounted) return;
     if (user != null) _userCtrl.text = user;
+    setState(() => _canRegister = !activated);
     if (status == 'pending' || status == 'app_access_pending') {
       setState(() => _tab = _AuthTab.pending);
     } else if (status == 'no_app_access') {
@@ -67,8 +67,7 @@ class _AuthGateScreenState extends State<AuthGateScreen> {
     _userCtrl.dispose();
     _passCtrl.dispose();
     _emailCtrl.dispose();
-    _codeCtrl.dispose();
-    _newPassCtrl.dispose();
+    _emailRepeatCtrl.dispose();
     super.dispose();
   }
 
@@ -172,20 +171,22 @@ class _AuthGateScreenState extends State<AuthGateScreen> {
     setState(() {
       _busy = true;
       _message = null;
-      _recoveryCode = null;
     });
     final r = await _auth.register(
       username: _userCtrl.text,
       password: _passCtrl.text,
       email: _emailCtrl.text,
+      emailRepeat: _emailRepeatCtrl.text,
       acceptedLegal: _acceptLegal,
     );
     if (!mounted) return;
     setState(() {
       _busy = false;
       _message = r.message;
-      _recoveryCode = r.recoveryCode;
-      if (r.ok || r.pending) _tab = _AuthTab.pending;
+      if (r.ok || r.pending) {
+        _canRegister = false;
+        _tab = _AuthTab.pending;
+      }
       if (r.alreadyHasAccess) _tab = _AuthTab.login;
     });
   }
@@ -239,19 +240,12 @@ class _AuthGateScreenState extends State<AuthGateScreen> {
     setState(() {
       _busy = true;
       _message = null;
-      _recoveryCode = null;
     });
-    final r = await _auth.recover(
-      username: _userCtrl.text,
-      recoveryCode: _codeCtrl.text,
-      newPassword: _newPassCtrl.text,
-    );
+    final r = await _auth.requestPasswordReset(email: _emailCtrl.text);
     if (!mounted) return;
     setState(() {
       _busy = false;
       _message = r.message;
-      _recoveryCode = r.recoveryCode;
-      if (r.ok) _tab = _AuthTab.login;
     });
   }
 
@@ -283,23 +277,24 @@ class _AuthGateScreenState extends State<AuthGateScreen> {
     if (_tab == _AuthTab.login) {
       return Column(
         children: [
-          Wrap(
-            alignment: WrapAlignment.center,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            children: [
-              Text(
-                '¿No tienes cuenta?',
-                style: TextStyle(color: AppColors.subtitle, fontSize: 13.5),
-              ),
-              TextButton(
-                onPressed: _busy ? null : () => _selectTab(_AuthTab.register),
-                child: const Text('Crear cuenta'),
-              ),
-            ],
-          ),
+          if (_canRegister)
+            Wrap(
+              alignment: WrapAlignment.center,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                Text(
+                  '¿No tienes cuenta?',
+                  style: TextStyle(color: AppColors.subtitle, fontSize: 13.5),
+                ),
+                TextButton(
+                  onPressed: _busy ? null : () => _selectTab(_AuthTab.register),
+                  child: const Text('Crear cuenta'),
+                ),
+              ],
+            ),
           TextButton(
             onPressed: _busy ? null : () => _selectTab(_AuthTab.recover),
-            child: const Text('Tengo un código de recuperación'),
+            child: const Text('Olvidé mi contraseña'),
           ),
         ],
       );
@@ -372,7 +367,6 @@ class _AuthGateScreenState extends State<AuthGateScreen> {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         ..._pendingBody(),
-                        ..._feedback(),
                       ],
                     ),
                   )
@@ -405,7 +399,7 @@ class _AuthGateScreenState extends State<AuthGateScreen> {
                     ),
                   if (_tab == _AuthTab.recover)
                     _AuthCard(
-                      title: 'Código de recuperación',
+                      title: 'Recuperar contraseña',
                       icon: Icons.key_outlined,
                       iconColor: AppColors.primary,
                       child: Column(
@@ -434,10 +428,6 @@ class _AuthGateScreenState extends State<AuthGateScreen> {
             text: _message!,
             tone: _showRequestAccess ? _BannerTone.warn : _BannerTone.neutral,
           ),
-        ],
-        if (_recoveryCode != null) ...[
-          const SizedBox(height: 14),
-          _RecoveryCodeCard(code: _recoveryCode!),
         ],
       ];
 
@@ -537,8 +527,8 @@ class _AuthGateScreenState extends State<AuthGateScreen> {
 
   List<Widget> _registerBody() => [
         const Text(
-          'Crea tu usuario o, si ya tienes cuenta en otra app AMG, '
-          'usa la misma contraseña para pedir acceso a SaludAMG.',
+          'Crea tu usuario. Si ya tienes cuenta en otra app AMG, no crees otra: '
+          'vuelve atrás y entra con ella para pedir acceso a SaludAMG.',
           style: TextStyle(
             color: AppColors.subtitle,
             fontSize: 13,
@@ -566,9 +556,15 @@ class _AuthGateScreenState extends State<AuthGateScreen> {
           keyboardType: TextInputType.emailAddress,
           autofillHints: const [AutofillHints.email],
           decoration: _field(
-            label: 'Email (opcional)',
-            hint: 'Para avisos y recuperación',
+            label: 'Email',
+            hint: 'Para recuperar la contraseña',
           ),
+        ),
+        const SizedBox(height: 12),
+        TextField(
+          controller: _emailRepeatCtrl,
+          keyboardType: TextInputType.emailAddress,
+          decoration: _field(label: 'Repetir email'),
         ),
         const SizedBox(height: 8),
         _LegalAcceptance(
@@ -599,8 +595,8 @@ class _AuthGateScreenState extends State<AuthGateScreen> {
 
   List<Widget> _recoverBody() => [
         const Text(
-          'Usa el código mostrado al crear la cuenta (o el regenerado en el panel) '
-          'para definir una nueva contraseña.',
+          'Escribe el email de tu cuenta y te enviaremos un enlace para crear '
+          'una nueva contraseña.',
           style: TextStyle(
             color: AppColors.subtitle,
             fontSize: 13,
@@ -609,29 +605,17 @@ class _AuthGateScreenState extends State<AuthGateScreen> {
         ),
         const SizedBox(height: 16),
         TextField(
-          controller: _userCtrl,
-          textInputAction: TextInputAction.next,
-          decoration: _field(label: 'Usuario'),
-        ),
-        const SizedBox(height: 12),
-        TextField(
-          controller: _codeCtrl,
-          textInputAction: TextInputAction.next,
-          textCapitalization: TextCapitalization.characters,
-          decoration: _field(label: 'Código de recuperación'),
-        ),
-        const SizedBox(height: 12),
-        TextField(
-          controller: _newPassCtrl,
-          obscureText: true,
-          decoration: _field(label: 'Nueva contraseña'),
+          controller: _emailCtrl,
+          keyboardType: TextInputType.emailAddress,
+          autofillHints: const [AutofillHints.email],
+          decoration: _field(label: 'Email'),
         ),
         const SizedBox(height: 16),
         SizedBox(
           height: 48,
           child: FilledButton(
             onPressed: _busy ? null : _submitRecover,
-            child: Text(_busy ? 'Guardando…' : 'Cambiar contraseña'),
+            child: Text(_busy ? 'Enviando…' : 'Enviar enlace'),
           ),
         ),
       ];
@@ -808,68 +792,6 @@ class _InfoBanner extends StatelessWidget {
         child: Text(
           text,
           style: TextStyle(color: fg, fontSize: 13, height: 1.4),
-        ),
-      ),
-    );
-  }
-}
-
-class _RecoveryCodeCard extends StatelessWidget {
-  const _RecoveryCodeCard({required this.code});
-
-  final String code;
-
-  @override
-  Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: const Color(0xFFFFFBEB),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFF6E2A8)),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(14, 12, 14, 8),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Guarda este código de recuperación',
-              style: TextStyle(
-                fontWeight: FontWeight.w700,
-                color: AppColors.title,
-              ),
-            ),
-            const SizedBox(height: 4),
-            const Text(
-              'Solo se muestra ahora. Sin él puede no haber otra vía de restablecimiento.',
-              style: TextStyle(
-                fontSize: 12,
-                color: AppColors.subtitle,
-                height: 1.35,
-              ),
-            ),
-            const SizedBox(height: 10),
-            SelectableText(
-              code,
-              style: const TextStyle(
-                fontFamily: 'monospace',
-                fontSize: 17,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 0.6,
-                color: AppColors.title,
-              ),
-            ),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: TextButton.icon(
-                onPressed: () {
-                  Clipboard.setData(ClipboardData(text: code));
-                },
-                icon: const Icon(Icons.copy, size: 18),
-                label: const Text('Copiar'),
-              ),
-            ),
-          ],
         ),
       ),
     );
