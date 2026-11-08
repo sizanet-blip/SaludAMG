@@ -215,6 +215,21 @@ class AppAuthService {
   /// Guarda en local que el usuario marcó privacidad/condiciones (versión actual).
   Future<void> markLegalAcceptedLocally() => _syncLocalLegalAcceptance();
 
+  /// ¿Hay sesión abierta pero sin aceptar la versión legal actual? Pasa tras
+  /// actualizar la app con una política nueva: se pide aceptarla una vez.
+  Future<bool> needsLegalUpdate() async {
+    if (!isConfigured || !await hasSession()) return false;
+    return !await hasLocalLegalAcceptance();
+  }
+
+  /// Acepta la versión legal actual: en local y en el panel (si hay red; si
+  /// no, se enviará en el próximo inicio de sesión).
+  Future<void> acceptCurrentLegal() async {
+    await _syncLocalLegalAcceptance();
+    final t = await token();
+    if (t != null && t.isNotEmpty) await _acceptLegalOnServer(t);
+  }
+
   Future<AppAuthResult> login({
     required String username,
     required String password,

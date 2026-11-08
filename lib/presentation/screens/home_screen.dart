@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../app.dart';
 import '../../app_scope.dart';
 import '../../core/theme/app_theme.dart';
+import '../../legal/privacy_content.dart';
 import '../../services/app_auth_service.dart';
 import '../../services/app_update_service.dart';
 import '../../services/debug_seed_service.dart';
@@ -18,6 +19,7 @@ import 'cuenta_amg_screen.dart';
 import 'help/ayuda_screen.dart';
 import 'history_screen.dart';
 import 'import_settings_screen.dart';
+import 'legal_document_screen.dart';
 import 'lock_settings_screen.dart';
 import 'medication_preferences_screen.dart';
 import 'measurement_form_screen.dart';
@@ -45,12 +47,73 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!await _checkLegalUpdate()) return;
       await _offerBiometrics();
       await _checkUpdatesOnStart();
     });
   }
 
   static const _kBioDeclined = 'biometric_offer_declined';
+
+  /// Política nueva tras actualizar la app: se pide aceptarla una vez.
+  /// Devuelve `false` si ha cerrado la sesión.
+  Future<bool> _checkLegalUpdate() async {
+    final auth = AppAuthService();
+    if (!await auth.needsLegalUpdate() || !mounted) return true;
+    final choice = await showDialog<String>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => PopScope(
+        canPop: false,
+        child: AlertDialog(
+          title: const Text('Política de privacidad actualizada'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Hemos actualizado la política de privacidad '
+                  '(versión ${PrivacyContent.version}). Lo principal:',
+                ),
+                const SizedBox(height: 8),
+                const Text(PrivacyContent.cambios),
+                const SizedBox(height: 8),
+                TextButton(
+                  style: TextButton.styleFrom(padding: EdgeInsets.zero),
+                  onPressed: () => Navigator.of(ctx).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => const LegalDocumentScreen(
+                        kind: LegalDocumentKind.privacy,
+                      ),
+                    ),
+                  ),
+                  child: const Text('Leer la política completa'),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, 'logout'),
+              child: const Text('Cerrar sesión'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(ctx, 'accept'),
+              child: const Text('Acepto'),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (choice == 'accept') {
+      await auth.acceptCurrentLegal();
+      return true;
+    }
+    await auth.logout();
+    if (mounted) SaludAmgApp.signOut(context);
+    return false;
+  }
 
   /// Tras iniciar sesión, una sola vez: «¿Abrir SaludAMG con tu huella?».
   /// Si dice «Ahora no» no se vuelve a preguntar (queda en Configuración).

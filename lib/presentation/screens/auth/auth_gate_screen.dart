@@ -761,7 +761,10 @@ class _LegalAcceptance extends StatelessWidget {
                 ),
               ),
             ),
-            TextSpan(text: ' de SaludAMG (v. ${PrivacyContent.version}).'),
+            TextSpan(
+              text: ' de SaludAMG (privacidad v. ${PrivacyContent.version}, '
+                  'condiciones v. ${TermsContent.version}).',
+            ),
           ],
         ),
       ),
