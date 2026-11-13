@@ -40,8 +40,10 @@ Lista:
 - `26_saludamg_informe_pdf_detalle.png`
 - `27_saludamg_resumen.png` — dashboard (última toma / evolución)
 - `28_saludamg_config.png` — hub de configuración
-- `29_saludamg_tomado_hora.png` — «Tomado»: elegir la hora real de la toma
+- `29_saludamg_tomado_hora.png` — «Tomado»: fecha, hora y Ahora
 - `30_saludamg_desbloqueo.png` — pantalla de desbloqueo (PIN / huella)
+- `31_saludamg_medicaciones_lista.png` — Lista de medicaciones
+- `32_saludamg_med_horarios.png` — formulario, horarios de aviso
 
 ## 2. Pega el HTML
 Abre `docs/manual-web-cms.html`, selecciona todo, copia y pégalo en el campo **contenido** del CMS (modo código/HTML si existe).
@@ -60,9 +62,11 @@ flutter run -d emulator-5554 --dart-define=APP_AUTH_API_URL=https://panel.amg.de
 # Pantallas de acceso: con la sesión cerrada
 python tool_capture_help.py auth
 
-# Pantallas de la app: con la sesión iniciada. Para «Pendientes de ayer»,
-# restaura antes una copia con una medicación que empiece días atrás.
+# Pantallas de la app: con la sesión iniciada y alguna medicación creada.
 python tool_capture_help.py app
+
+# Solo Medicaciones (Hoy, diálogo Tomado, Lista y horarios del formulario):
+python tool_capture_help.py meds
 ```
 
 `30_saludamg_desbloqueo.png` se hace a mano: pon un PIN en Configuración → Bloqueo,

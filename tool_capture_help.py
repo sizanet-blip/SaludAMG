@@ -150,6 +150,66 @@ def _open_config_item(label: str) -> bool:
     return tap_label(label)
 
 
+def capture_medicaciones() -> None:
+    """Hoy, diálogo Tomado, Lista y horarios del formulario."""
+    print("--- medicaciones ---")
+    if not _open_from_home("Medicaciones"):
+        print(" skip medicaciones")
+        return
+    time.sleep(0.6)
+    shot("10_saludamg_medicaciones.png")
+    if tap_label("Tomado", partial=False):
+        time.sleep(0.6)
+        shot("29_saludamg_tomado_hora.png")
+        tap_label("Cancelar", partial=False)
+        time.sleep(0.4)
+    if tap_label("Lista", partial=False):
+        time.sleep(0.5)
+        shot("31_saludamg_medicaciones_lista.png")
+        # Primera medicación de la lista (el título no es «Lista» ni «Hoy»).
+        xml = dump_ui()
+        opened = False
+        for primary, x, y, y1, _y2, full in nodes(xml):
+            if y1 < 520:
+                continue
+            blob = f"{primary} {full}"
+            if any(
+                skip in blob
+                for skip in (
+                    "Lista",
+                    "Hoy",
+                    "Cumplimiento",
+                    "Medicación",
+                    "Medicaciones",
+                    "activas",
+                    "·",
+                    "Pedir",
+                    "días",
+                    "Stock",
+                    "Acciones",
+                    "Tomas",
+                    "Eliminar",
+                )
+            ):
+                continue
+            adb("shell", "input", "tap", str(x), str(y))
+            opened = True
+            print("open form", primary)
+            time.sleep(0.8)
+            break
+        if opened:
+            for _ in range(4):
+                xml = dump_ui()
+                labels = " ".join(t for t, *_ in nodes(xml))
+                if "Horarios de aviso" in labels or "Añadir horario" in labels:
+                    break
+                scroll_down()
+            time.sleep(0.3)
+            shot("32_saludamg_med_horarios.png")
+            back()
+    back()
+
+
 def capture_app_screens() -> None:
     print("--- app ---")
     time.sleep(1.0)
@@ -171,15 +231,7 @@ def capture_app_screens() -> None:
         shot("08_saludamg_historial.png")
         back()
 
-    if _open_from_home("Medicaciones"):
-        time.sleep(0.6)
-        shot("10_saludamg_medicaciones.png")
-        # «Tomado» pregunta la hora real (se cancela: no guarda nada).
-        if tap_label("Tomado", partial=False):
-            time.sleep(0.6)
-            shot("29_saludamg_tomado_hora.png")
-            tap_label("Cancelar", partial=False)
-        back()
+    capture_medicaciones()
 
     if _open_from_home("Configuración"):
         time.sleep(0.5)
@@ -287,6 +339,8 @@ def main():
         capture_auth()
     if mode in ("app", "all"):
         capture_app_screens()
+    if mode == "meds":
+        capture_medicaciones()
     print("done ->", OUT)
 
 
