@@ -150,8 +150,11 @@ abstract final class HelpContent {
       HelpDocSection(
         title: '7. Medicación y recordatorios',
         paragraphs: [
-          'Alta de medicamentos con pautas, horarios y, si lo activas, control de tomas y stock.',
-          'En Opciones de medicación defines botón en inicio, seguimiento de dosis y avisos de pedida al médico.',
+          'Medicaciones tiene tres vistas: Hoy (marcar tomas), Lista (altas y edición) y Cumplimiento (7 y 30 días). El icono tune abre las opciones.',
+          'En Hoy cada fila es una toma: hora, nombre y dosis. El icono de verificación es Tomado y el de menos es Omitir. La hora se pone verde si está tomada y naranja si está omitida.',
+          'Tomado pide fecha y hora (atajo Ahora). Puedes retroceder hasta 30 días: si ese día le toca, la marca se casa con el horario previsto. Omitir pide el día. Si ya estaba marcada, el diálogo incluye Quitar marca.',
+          'En Lista, Añadir horario abre el reloj y no hay un máximo de horas; una hora no se puede repetir. El menú de cada medicación abre Tomas, con las marcas de los últimos 30 días, para borrar un error.',
+          'En Opciones de medicación defines el botón en inicio, el seguimiento de dosis, el stock y los avisos de pedida al médico.',
           'Recordatorios (en Configuración) y notificaciones locales del sistema.',
         ],
       ),
@@ -224,6 +227,21 @@ abstract final class HelpContent {
       question: '¿Dónde están Medicación y Medición?',
       answer:
           'En la pantalla de inicio, arriba del menú. Medición abre el formulario de una lectura; Medicación abre el listado (se puede ocultar en Medicación config → Botón en inicio).',
+    ),
+    HelpFaqItem(
+      question: 'Se me olvidó marcar una toma de hace unos días',
+      answer:
+          'En Medicaciones → Hoy pulsa el icono de tomado, cambia la fecha (hasta 30 días) y la hora, y guarda. Si ese día tenía horario, cuenta para ese día. Las de ayer también aparecen en el bloque Ayer.',
+    ),
+    HelpFaqItem(
+      question: 'He marcado una toma dos veces o en el día que no era',
+      answer:
+          'Abre otra vez Tomado u Omitir y pulsa Quitar marca. O entra en Lista, menú de la medicación, Tomas, y borra esa fila.',
+    ),
+    HelpFaqItem(
+      question: '¿Cuántos horarios puedo poner?',
+      answer:
+          'Los que necesites. En el formulario de la medicación, Añadir horario abre el reloj. La misma hora no se puede repetir.',
     ),
     HelpFaqItem(
       question: '¿Dónde están los recordatorios?',

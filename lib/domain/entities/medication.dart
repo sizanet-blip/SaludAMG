@@ -22,8 +22,6 @@ class Medication {
     this.doctorLeadDays = 0,
   });
 
-  static const maxSlots = 8;
-
   /// Etiquetas cortas Lun…Dom (DateTime.weekday 1–7).
   static const weekdayLabels = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
 
@@ -76,8 +74,7 @@ class Medication {
         .toSet()
         .toList()
       ..sort();
-    if (unique.length <= maxSlots) return unique;
-    return unique.sublist(0, maxSlots);
+    return unique;
   }
 
   List<int> get effectiveWeekdays {

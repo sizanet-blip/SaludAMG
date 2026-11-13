@@ -155,6 +155,33 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
     });
   }
 
+  int _suggestedMinute() {
+    final used = _minutes.toSet();
+    var candidate = _minutes.isEmpty ? 8 * 60 : (_minutes.last + 60) % (24 * 60);
+    for (var i = 0; i < 24 * 60; i++) {
+      if (!used.contains(candidate)) return candidate;
+      candidate = (candidate + 1) % (24 * 60);
+    }
+    return 8 * 60;
+  }
+
+  Future<void> _addTime() async {
+    final suggested = _suggestedMinute();
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay(hour: suggested ~/ 60, minute: suggested % 60),
+    );
+    if (picked == null) return;
+    final minutes = picked.hour * 60 + picked.minute;
+    if (_minutes.contains(minutes)) {
+      _message('Ese horario ya está.');
+      return;
+    }
+    setState(() {
+      _minutes = [..._minutes, minutes]..sort();
+    });
+  }
+
   Future<void> _editTime(int index) async {
     final current = _minutes[index];
     final picked = await showTimePicker(
@@ -434,20 +461,14 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
                           : const Icon(Icons.schedule),
                       onTap: () => _editTime(i),
                     ),
-                  if (_minutes.length < Medication.maxSlots)
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: TextButton.icon(
-                        onPressed: () {
-                          setState(() {
-                            _minutes = [..._minutes, 20 * 60];
-                            _minutes = _minutes.toSet().toList()..sort();
-                          });
-                        },
-                        icon: const Icon(Icons.add),
-                        label: const Text('Añadir horario'),
-                      ),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: TextButton.icon(
+                      onPressed: _addTime,
+                      icon: const Icon(Icons.add),
+                      label: const Text('Añadir horario'),
                     ),
+                  ),
                 ],
               ),
             ),

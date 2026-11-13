@@ -245,32 +245,62 @@
 
   <h2 id="medicacion">6. Medicación, recordatorios y configuración</h2>
   <p>
-    Desde el inicio o el botón Medicación accedes al listado de fármacos, pautas y tomas.
+    Desde el inicio o el botón Medicación entras en <strong>Medicaciones</strong>.
+    Arriba hay tres vistas: <strong>Hoy</strong>, <strong>Lista</strong> y <strong>Cumplimiento</strong>.
     El icono tune abre las <strong>Opciones de medicación</strong>.
   </p>
   <figure>
-    <img src="/uploads/cms/10_saludamg_medicaciones.png" alt="Medicaciones" />
-    <figcaption>Medicaciones: pendientes de ayer, tomas de hoy y cumplimiento</figcaption>
+    <img src="/uploads/cms/10_saludamg_medicaciones.png" alt="Medicaciones de hoy" />
+    <figcaption>Hoy: cada toma con su hora, el nombre y los iconos de tomado y omitir</figcaption>
   </figure>
-  <h3>Marcar las tomas</h3>
+  <h3>Hoy</h3>
   <ul>
-    <li>En <strong>Hoy</strong> sale cada medicación con sus horas. Junto a cada hora tienes
-      <em>Tomado</em> y <em>Omitido</em>.</li>
-    <li>Al pulsar <strong>Tomado</strong> te pregunta <em>¿Cuándo la tomaste?</em>. Por defecto
-      es ahora: pulsa <em>Guardar</em>. Si fue a otra hora, pulsa <em>Cambiar</em> y elige día
-      y hora.</li>
-    <li>En la lista verás la hora real, por ejemplo <em>Tomado 08:15</em>.</li>
+    <li>Cada fila es una toma: hora, nombre y dosis. Si una medicación tiene varias horas,
+      el nombre se repite en cada una.</li>
+    <li>La hora va en gris si no está marcada, en verde si está tomada y en naranja si está omitida.</li>
+    <li>El icono de verificación marca <strong>Tomado</strong>; el de menos, <strong>Omitir</strong>.</li>
+    <li>Si ayer quedó alguna toma sin marcar, sale el bloque <strong>Ayer</strong> encima de Hoy.</li>
+  </ul>
+  <h3>Marcar una toma</h3>
+  <ul>
+    <li><strong>Tomado</strong> abre fecha y hora. Por defecto es ahora: pulsa <em>Guardar</em>
+      o <em>Ahora</em> si habías cambiado la hora. Puedes retroceder hasta 30 días.</li>
+    <li>Si eliges otro día, la marca se casa con el horario previsto de esa medicación.
+      Si ese día no le toca, no se guarda. Si hay dos horarios muy próximos, pregunta cuál.
+      Si ese hueco ya estaba marcado, al guardar se sustituye.</li>
+    <li>En la fila verás la hora real, por ejemplo <em>Tomado hoy 17:01</em>.</li>
+    <li><strong>Omitir</strong> pide el día (y el horario, si hay varios). No pregunta una hora.</li>
+    <li>Si la toma ya tiene marca, el mismo diálogo incluye <strong>Quitar marca</strong>.
+      Si estaba tomada y llevas stock, las unidades vuelven.</li>
   </ul>
   <figure>
-    <img src="/uploads/cms/29_saludamg_tomado_hora.png" alt="Elegir la hora de la toma" />
-    <figcaption>Tomado: toma prevista y hora real (por defecto, ahora)</figcaption>
+    <img src="/uploads/cms/29_saludamg_tomado_hora.png" alt="Elegir fecha y hora de la toma" />
+    <figcaption>Tomado: fecha, hora y atajo Ahora</figcaption>
   </figure>
-  <h3>Si se te olvida o te la tomas pasada la medianoche</h3>
+  <h3>Lista: dar de alta y corregir</h3>
   <p>
-    Al día siguiente aparece arriba el apartado <strong>Pendientes de ayer</strong> con las
-    tomas de ayer que se quedaron sin marcar. Por ejemplo, si la de las 22:00 te la tomas a
-    las 00:30, márcala ahí como <em>Tomado</em> con las 00:30: cuenta para ayer y no
-    descuadra el día de hoy. Cuando no queda nada pendiente, el apartado desaparece.
+    En <strong>Lista</strong> están todas las medicaciones. Pulsa una para editarla o el botón
+    <strong>Medicación</strong> para crear otra. En <em>Horarios de aviso</em>,
+    <strong>Añadir horario</strong> abre el reloj: elige la hora que quieras.
+    No hay un máximo de horarios. Si esa hora ya existe, la app avisa y no la duplica.
+  </p>
+  <figure>
+    <img src="/uploads/cms/31_saludamg_medicaciones_lista.png" alt="Lista de medicaciones" />
+    <figcaption>Lista: inventario de medicaciones</figcaption>
+  </figure>
+  <figure>
+    <img src="/uploads/cms/32_saludamg_med_horarios.png" alt="Horarios de aviso" />
+    <figcaption>Formulario: horarios de aviso, sin límite</figcaption>
+  </figure>
+  <p>
+    El menú de cada fila (⋮) incluye <strong>Tomas</strong>: las marcas de los últimos 30 días.
+    Desde ahí puedes borrar una si te equivocaste. También puedes reponer stock o marcar
+    que ya pediste al médico, si esas opciones están activas.
+  </p>
+  <h3>Cumplimiento</h3>
+  <p>
+    La tercera vista resume el porcentaje de tomas de los últimos 7 y 30 días, en total
+    y por medicación.
   </p>
   <figure>
     <img src="/uploads/cms/11_saludamg_med_config.png" alt="Opciones de medicación" />
@@ -405,8 +435,16 @@
     <p>Configuración → Copia de seguridad → Restaurar desde archivo. Sustituye los datos actuales; si el archivo está dañado, no cambia nada.</p>
   </details>
   <details>
-    <summary>Se me olvidó marcar la toma de anoche</summary>
-    <p>Abre Medicaciones: arriba sale «Pendientes de ayer». Pulsa «Tomado», ajusta la hora real con «Cambiar» y guarda. Cuenta para el día que tocaba.</p>
+    <summary>Se me olvidó marcar una toma de hace unos días</summary>
+    <p>En Hoy pulsa el icono de tomado de esa medicación, cambia la fecha (hasta 30 días atrás) y la hora, y guarda. Si ese día tenía horario, la marca se anota ahí. Las de ayer también salen en el bloque «Ayer».</p>
+  </details>
+  <details>
+    <summary>He marcado una toma dos veces o en el día que no era</summary>
+    <p>Vuelve a abrir Tomado u Omitir: si ya hay marca, pulsa «Quitar marca». También puedes ir a Lista → menú de la medicación → Tomas y borrar la fila.</p>
+  </details>
+  <details>
+    <summary>¿Cuántos horarios puedo poner a una medicación?</summary>
+    <p>Los que necesites. En el formulario, Añadir horario abre el reloj. No se puede repetir la misma hora.</p>
   </details>
   <details>
     <summary>¿Puedo abrir la app con la huella?</summary>
