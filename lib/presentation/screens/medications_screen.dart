@@ -421,12 +421,15 @@ class _MedicationsScreenState extends State<MedicationsScreen> {
                   children: [
                     if (trackDoses)
                       Padding(
-                        padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
+                        padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
                         child: SegmentedButton<_MedView>(
                           showSelectedIcon: false,
                           style: const ButtonStyle(
                             visualDensity: VisualDensity.compact,
                             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            padding: WidgetStatePropertyAll(
+                              EdgeInsets.symmetric(horizontal: 4),
+                            ),
                             textStyle: WidgetStatePropertyAll(
                               TextStyle(
                                 fontSize: 13,
@@ -437,15 +440,15 @@ class _MedicationsScreenState extends State<MedicationsScreen> {
                           segments: const [
                             ButtonSegment(
                               value: _MedView.today,
-                              label: Text('Hoy'),
+                              label: Text('Hoy', maxLines: 1, softWrap: false),
                             ),
                             ButtonSegment(
                               value: _MedView.list,
-                              label: Text('Lista'),
+                              label: Text('Lista', maxLines: 1, softWrap: false),
                             ),
                             ButtonSegment(
                               value: _MedView.adherence,
-                              label: Text('Cumplimiento'),
+                              label: _SegmentLabel('Cumplimiento'),
                             ),
                           ],
                           selected: {effectiveView},
@@ -820,6 +823,21 @@ class _AdherenceCompactRow extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _SegmentLabel extends StatelessWidget {
+  const _SegmentLabel(this.text);
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return FittedBox(
+      fit: BoxFit.scaleDown,
+      alignment: Alignment.center,
+      child: Text(text, maxLines: 1, softWrap: false),
     );
   }
 }
